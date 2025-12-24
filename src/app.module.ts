@@ -2,9 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { User } from './entities/user.entity';
-import { UserService } from './services/user.service';
-import { UserController } from './controllers/user.controller';
+import { User } from './users/user.entity';
+import { UserModule } from './users/user.module';
 
 @Module({
   imports: [
@@ -16,11 +15,11 @@ import { UserController } from './controllers/user.controller';
       password: (process.env.DB_PASSWORD as string) || 'password',
       database: (process.env.DB_NAME as string) || 'tryerfit',
       entities: [User],
-      synchronize: false, // Отключаем синхронизацию, чтобы не изменять существующую схему
+      synchronize: false,
     }),
-    TypeOrmModule.forFeature([User]),
+    UserModule,
   ],
-  controllers: [AppController, UserController],
-  providers: [AppService, UserService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

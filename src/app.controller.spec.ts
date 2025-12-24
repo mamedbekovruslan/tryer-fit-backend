@@ -14,9 +14,14 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  describe('health', () => {
+    it('should return health status', () => {
+      const result = {
+        status: 'OK',
+        timestamp: new Date(),
+      };
+      jest.spyOn(global.Date, 'now').mockImplementation(() => result.timestamp.getTime());
+      expect(appController.getHealth()).toEqual(result);
     });
   });
 });
