@@ -2,9 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { User } from './entities/user.entity';
-import { UserService } from './services/user.service';
-import { UserController } from './controllers/user.controller';
+import { Client } from './users/client.entity';
+import { ClientModule } from './users/client.module';
 
 @Module({
   imports: [
@@ -15,12 +14,12 @@ import { UserController } from './controllers/user.controller';
       username: (process.env.DB_USERNAME as string) || 'postgres',
       password: (process.env.DB_PASSWORD as string) || 'password',
       database: (process.env.DB_NAME as string) || 'tryerfit',
-      entities: [User],
-      synchronize: false, // Отключаем синхронизацию, чтобы не изменять существующую схему
+      entities: [Client],
+      synchronize: false,
     }),
-    TypeOrmModule.forFeature([User]),
+    ClientModule,
   ],
-  controllers: [AppController, UserController],
-  providers: [AppService, UserService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
