@@ -3,7 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Client } from './users/client.entity';
+import { Trainer } from './users/trainer.entity';
 import { ClientModule } from './users/client.module';
+import { TrainerModule } from './users/trainer.module';
+import { AuthModule } from './auth/auth.module';
+import { HomeModule } from './home/home.module';
 
 @Module({
   imports: [
@@ -14,10 +18,13 @@ import { ClientModule } from './users/client.module';
       username: (process.env.DB_USERNAME as string) || 'postgres',
       password: (process.env.DB_PASSWORD as string) || 'password',
       database: (process.env.DB_NAME as string) || 'tryerfit',
-      entities: [Client],
+      entities: [Client, Trainer],
       synchronize: false,
     }),
     ClientModule,
+    TrainerModule,
+    AuthModule,
+    HomeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

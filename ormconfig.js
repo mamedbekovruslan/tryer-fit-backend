@@ -1,4 +1,6 @@
-module.exports = {
+const { DataSource } = require('typeorm');
+
+module.exports = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT, 10) || 5432,
@@ -13,4 +15,4 @@ module.exports = {
   cli: {
     migrationsDir: 'src/migrations',
   },
-};
+});

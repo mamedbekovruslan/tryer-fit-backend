@@ -12,4 +12,11 @@ export class AppController {
       timestamp: new Date(),
     };
   }
+
+  @Get('test')
+  getTest(): { message: string } {
+    return {
+      message: 'Server is running correctly',
+    };
+  }
 }

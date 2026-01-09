@@ -1,5 +1,4 @@
 const { DataSource } = require('typeorm');
-const { User } = require('./src/users/user.entity');
 
 module.exports = new DataSource({
   type: 'postgres',
@@ -8,7 +7,7 @@ module.exports = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_NAME || 'tryerfit',
-  entities: [__dirname + '/src/**/*.entity{.ts,.js}'],
+  entities: [__dirname + '/dist/**/*.entity.js', __dirname + '/src/**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/src/migrations/*{.ts,.js}'],
   synchronize: false,
   logging: false,
