@@ -4,7 +4,10 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Trainer } from './trainer.entity';
 
 export enum FitnessGoal {
   WEIGHT_LOSS = 'weight_loss',
@@ -79,4 +82,8 @@ export class Client {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updated_at: Date;
+
+  @ManyToOne(() => Trainer, { nullable: true })
+  @JoinColumn({ name: 'trainer_id' })
+  trainer?: Trainer;
 }

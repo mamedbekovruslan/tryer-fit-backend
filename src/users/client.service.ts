@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client, FitnessGoal } from './client.entity';
+import { TrainerService } from './trainer.service';
 import * as bcrypt from 'bcrypt';
 
 export interface CreateClientDto {
@@ -10,6 +11,7 @@ export interface CreateClientDto {
   password: string;
   first_name?: string;
   last_name?: string;
+  trainer_id?: number;
   // Данные для профиля
   waist_circumference?: number;
   chest_circumference?: number;
@@ -31,10 +33,13 @@ export class ClientService {
   constructor(
     @InjectRepository(Client)
     private clientRepository: Repository<Client>,
+    private trainerService: TrainerService,
   ) {}
 
   async findAll(): Promise<Client[]> {
-    return await this.clientRepository.find();
+    return await this.clientRepository.find({
+      relations: ['trainer'],
+    });
   }
 
   async create(clientData: CreateClientDto): Promise<Client> {
@@ -65,6 +70,15 @@ export class ClientService {
     client.first_name = clientData.first_name;
     client.last_name = clientData.last_name;
 
+    // Handle trainer assignment if provided
+    if (clientData.trainer_id) {
+      const trainer = await this.trainerService.findById(clientData.trainer_id);
+      if (!trainer) {
+        throw new BadRequestException('Trainer not found');
+      }
+      client.trainer = trainer;
+    }
+
     // Добавляем поля профиля
     client.waist_circumference = clientData.waist_circumference;
     client.chest_circumference = clientData.chest_circumference;
@@ -88,6 +102,9 @@ export class ClientService {
   }
 
   async findById(id: number): Promise<Client | null> {
-    return await this.clientRepository.findOne({ where: { id } });
+    return await this.clientRepository.findOne({
+      where: { id },
+      relations: ['trainer']
+    });
   }
 }
