@@ -102,9 +102,12 @@ export class ClientService {
   }
 
   async findById(id: number): Promise<Client | null> {
-    return await this.clientRepository.findOne({
+    console.log('Searching for client with ID:', id); // Логируем ID, который ищем
+    const client = await this.clientRepository.findOne({
       where: { id },
       relations: ['trainer']
     });
+    console.log('Found client:', client); // Логируем найденного клиента
+    return client;
   }
 }

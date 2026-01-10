@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus, ConflictException, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, HttpCode, HttpStatus, ConflictException, BadRequestException, UseGuards, Request, Param } from '@nestjs/common';
 import { ClientService } from './client.service';
 import type { CreateClientDto } from './client.service';
 import { Client } from './client.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('clients')
 export class ClientController {
@@ -27,5 +28,34 @@ export class ClientController {
     }
 
     return await this.clientService.create(createClientDto);
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Request() req): Promise<Client> {
+    console.log('Requesting profile for user:', req.user); // Логируем информацию о пользователе
+
+    // Убедимся, что пользователь является клиентом
+    if (req.user.user_type !== 'client') {
+      throw new BadRequestException('Only clients can access their profile');
+    }
+
+    const client = await this.clientService.findById(req.user.sub);
+    if (!client) {
+      throw new BadRequestException('Client not found');
+    }
+    console.log('Returning client:', client); // Логируем возвращаемого клиента
+    return client;
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  async findOne(@Request() req, @Param('id') id: string): Promise<Client> {
+    const clientId = parseInt(id, 10);
+    const client = await this.clientService.findById(clientId);
+    if (!client) {
+      throw new BadRequestException('Client not found');
+    }
+    return client;
   }
 }

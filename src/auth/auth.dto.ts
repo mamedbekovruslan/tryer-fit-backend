@@ -10,5 +10,6 @@ export interface AuthResponse {
     email: string;
     username: string;
     user_type: 'client' | 'trainer';
+    trainer?: any; // Информация о тренере для клиентов
   };
 }
