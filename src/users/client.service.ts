@@ -26,6 +26,10 @@ export interface CreateClientDto {
   training_experience?: string;
   current_diet?: string;
   photo_urls?: string[];
+  // Поля для хранения текущих данных прогресса
+  weight?: number;
+  body_fat?: number;
+  muscle_mass?: number;
 }
 
 @Injectable()
@@ -93,6 +97,10 @@ export class ClientService {
     client.training_experience = clientData.training_experience;
     client.current_diet = clientData.current_diet;
     client.photo_urls = clientData.photo_urls;
+    // Добавляем поля прогресса
+    client.weight = clientData.weight;
+    client.body_fat = clientData.body_fat;
+    client.muscle_mass = clientData.muscle_mass;
 
     return await this.clientRepository.save(client);
   }
