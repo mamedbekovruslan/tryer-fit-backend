@@ -110,4 +110,16 @@ export class ClientService {
     console.log('Found client:', client); // Логируем найденного клиента
     return client;
   }
+
+  async update(id: number, partialClient: Partial<Client>): Promise<Client> {
+    const client = await this.clientRepository.findOne({ where: { id } });
+    if (!client) {
+      throw new BadRequestException('Client not found');
+    }
+
+    // Обновляем только те поля, которые предоставлены
+    Object.assign(client, partialClient);
+
+    return await this.clientRepository.save(client);
+  }
 }

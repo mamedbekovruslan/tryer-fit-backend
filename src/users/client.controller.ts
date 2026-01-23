@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus, ConflictException, BadRequestException, UseGuards, Request, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  ConflictException,
+  BadRequestException,
+  UseGuards,
+  Request,
+  Param,
+  Put,
+} from '@nestjs/common';
 import { ClientService } from './client.service';
 import type { CreateClientDto } from './client.service';
 import { Client } from './client.entity';
@@ -57,5 +70,24 @@ export class ClientController {
       throw new BadRequestException('Client not found');
     }
     return client;
+  }
+
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@Request() req, @Body() updateClientDto: Partial<CreateClientDto>): Promise<Client> {
+    // Убедимся, что пользователь является клиентом
+    if (req.user.user_type !== 'client') {
+      throw new BadRequestException('Only clients can update their profile');
+    }
+
+    const client = await this.clientService.findById(req.user.sub);
+    if (!client) {
+      throw new BadRequestException('Client not found');
+    }
+
+    // Обновляем только те поля, которые предоставлены в запросе
+    Object.assign(client, updateClientDto);
+
+    return await this.clientService.update(client.id, client);
   }
 }
