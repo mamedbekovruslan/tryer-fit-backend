@@ -1,7 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, IsNull } from 'typeorm';
 import { Trainer } from './trainer.entity';
+import { Client } from './client.entity';
 import * as bcrypt from 'bcrypt';
 
 export interface CreateTrainerDto {
@@ -30,6 +31,8 @@ export class TrainerService {
   constructor(
     @InjectRepository(Trainer)
     private trainerRepository: Repository<Trainer>,
+    @InjectRepository(Client)
+    private clientRepository: Repository<Client>,
   ) {}
 
   async findAll(): Promise<Trainer[]> {
@@ -87,5 +90,57 @@ export class TrainerService {
 
   async findById(id: number): Promise<Trainer | null> {
     return await this.trainerRepository.findOne({ where: { id } });
+  }
+
+  // Получить клиентов, привязанных к тренеру
+  async getClientsByTrainerId(trainerId: number): Promise<Client[]> {
+    return await this.clientRepository.find({
+      where: { trainer: { id: trainerId } },
+      relations: ['trainer']
+    });
+  }
+
+  // Привязать клиента к тренеру
+  async assignClientToTrainer(clientId: number, trainerId: number): Promise<Client> {
+    // Находим клиента и тренера
+    const client = await this.clientRepository.findOne({ where: { id: clientId }, relations: ['trainer'] });
+    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+
+    if (!client) {
+      throw new NotFoundException(`Client with ID ${clientId} not found`);
+    }
+
+    if (!trainer) {
+      throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
+    }
+
+    // Привязываем клиента к тренеру
+    client.trainer = trainer;
+    const updatedClient = await this.clientRepository.save(client);
+
+    // Возвращаем обновленного клиента с полной информацией о тренере
+    const result = await this.clientRepository.findOne({ where: { id: updatedClient.id }, relations: ['trainer'] });
+    if (!result) {
+      throw new NotFoundException(`Updated client with ID ${updatedClient.id} not found`);
+    }
+    return result;
+  }
+
+  // Отвязать клиента от тренера
+  async unassignClientFromTrainer(clientId: number): Promise<Client> {
+    // Используем QueryBuilder для обновления связи
+    await this.clientRepository
+      .createQueryBuilder()
+      .update()
+      .set({ trainer: () => 'NULL' })
+      .where('id = :id', { id: clientId })
+      .execute();
+
+    // Возвращаем обновленного клиента
+    const result = await this.clientRepository.findOne({ where: { id: clientId }, relations: ['trainer'] });
+    if (!result) {
+      throw new NotFoundException(`Client with ID ${clientId} not found after unassignment`);
+    }
+    return result;
   }
 }

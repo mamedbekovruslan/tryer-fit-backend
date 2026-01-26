@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { Client, FitnessGoal } from './client.entity';
 import { TrainerService } from './trainer.service';
 import * as bcrypt from 'bcrypt';
@@ -129,5 +129,14 @@ export class ClientService {
     Object.assign(client, partialClient);
 
     return await this.clientRepository.save(client);
+  }
+
+  // Получить клиентов, которые не привязаны ни к какому тренеру
+  async getUnassignedClients(): Promise<Client[]> {
+    return await this.clientRepository
+      .createQueryBuilder('client')
+      .leftJoinAndSelect('client.trainer', 'trainer')
+      .where('client.trainer IS NULL')
+      .getMany();
   }
 }
