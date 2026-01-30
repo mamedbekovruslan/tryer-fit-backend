@@ -5,11 +5,17 @@ import { AppService } from './app.service';
 import { Client } from './users/client.entity';
 import { Trainer } from './users/trainer.entity';
 import { ProgressReport } from './progress/progress-report.entity';
+import { NutritionCategory } from './nutrition/nutrition-category.entity';
+import { NutritionDay } from './nutrition/nutrition-day.entity';
+import { NutritionPlan } from './nutrition/nutrition-plan.entity';
 import { ClientModule } from './users/client.module';
 import { TrainerModule } from './users/trainer.module';
 import { AuthModule } from './auth/auth.module';
 import { HomeModule } from './home/home.module';
 import { ProgressReportModule } from './progress/progress-report.module';
+import { NutritionCategoryModule } from './nutrition/nutrition-category.module';
+import { NutritionDayModule } from './nutrition/nutrition-day.module';
+import { NutritionPlanModule } from './nutrition/nutrition-plan.module';
 
 @Module({
   imports: [
@@ -20,7 +26,7 @@ import { ProgressReportModule } from './progress/progress-report.module';
       username: (process.env.DB_USERNAME as string) || 'postgres',
       password: (process.env.DB_PASSWORD as string) || 'password',
       database: (process.env.DB_NAME as string) || 'tryerfit',
-      entities: [Client, Trainer, ProgressReport],
+      entities: [Client, Trainer, ProgressReport, NutritionCategory, NutritionDay, NutritionPlan],
       synchronize: false,
     }),
     ClientModule,
@@ -28,6 +34,9 @@ import { ProgressReportModule } from './progress/progress-report.module';
     AuthModule,
     HomeModule,
     ProgressReportModule,
+    NutritionCategoryModule,
+    NutritionDayModule,
+    NutritionPlanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

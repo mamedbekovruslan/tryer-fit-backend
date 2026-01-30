@@ -143,4 +143,24 @@ export class TrainerService {
     }
     return result;
   }
+
+  // Обновить информацию о тренере
+  async updateTrainer(id: number, updateData: Partial<CreateTrainerDto>): Promise<Trainer> {
+    const trainer = await this.trainerRepository.findOne({ where: { id } });
+
+    if (!trainer) {
+      throw new NotFoundException(`Trainer with ID ${id} not found`);
+    }
+
+    // Обновляем только те поля, которые предоставлены в updateData
+    Object.assign(trainer, updateData);
+
+    // Если предоставлен новый пароль, хешируем его
+    if (updateData.password) {
+      const saltRounds = 10;
+      trainer.password_hash = await bcrypt.hash(updateData.password, saltRounds);
+    }
+
+    return await this.trainerRepository.save(trainer);
+  }
 }

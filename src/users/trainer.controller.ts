@@ -1,4 +1,19 @@
-import { Controller, Get, Post, Body, HttpCode, HttpStatus, ConflictException, BadRequestException, UseGuards, Request, Param, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  ConflictException,
+  BadRequestException,
+  UseGuards,
+  Request,
+  Param,
+  Put,
+  Delete,
+  Patch,
+} from '@nestjs/common';
 import { TrainerService } from './trainer.service';
 import { ClientService } from './client.service';
 import type { CreateTrainerDto } from './trainer.service';
@@ -130,6 +145,51 @@ export class TrainerController {
     }
 
     return await this.trainerService.unassignClientFromTrainer(cId);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtAuthGuard)
+  async update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateData: Partial<CreateTrainerDto>
+  ): Promise<Trainer> {
+    const trainerId = parseInt(id, 10);
+
+    // Проверяем, является ли id допустимым числом
+    if (isNaN(trainerId)) {
+      throw new BadRequestException('Invalid trainer ID');
+    }
+
+    // Проверяем, что пользователь - тренер и обновляет свой профиль
+    if (req.user.user_type !== 'trainer' || req.user.sub !== trainerId) {
+      throw new BadRequestException('Trainers can only update their own profile');
+    }
+
+    return await this.trainerService.updateTrainer(trainerId, updateData);
+  }
+
+  // PATCH endpoint для обновления отдельных полей
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  async updateField(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateData: Partial<CreateTrainerDto>
+  ): Promise<Trainer> {
+    const trainerId = parseInt(id, 10);
+
+    // Проверяем, является ли id допустимым числом
+    if (isNaN(trainerId)) {
+      throw new BadRequestException('Invalid trainer ID');
+    }
+
+    // Проверяем, что пользователь - тренер и обновляет свой профиль
+    if (req.user.user_type !== 'trainer' || req.user.sub !== trainerId) {
+      throw new BadRequestException('Trainers can only update their own profile');
+    }
+
+    return await this.trainerService.updateTrainer(trainerId, updateData);
   }
 
   @Get(':id')
