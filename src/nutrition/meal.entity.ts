@@ -6,13 +6,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
 } from 'typeorm';
-import { NutritionCategory } from '../nutrition/nutrition-category.entity';
-import { Meal } from './meal.entity';
+import { NutritionDay } from './nutrition-day.entity';
 
-@Entity({ name: 'nutrition_days' })
-export class NutritionDay {
+@Entity({ name: 'meals' })
+export class Meal {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -22,12 +20,9 @@ export class NutritionDay {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @ManyToOne(() => NutritionCategory, { nullable: false })
-  @JoinColumn({ name: 'nutrition_category_id' })
-  nutritionCategory: NutritionCategory;
-
-  @OneToMany(() => Meal, (meal) => meal.nutritionDay, { cascade: true })
-  meals: Meal[];
+  @ManyToOne(() => NutritionDay, (nutritionDay) => nutritionDay.meals, { nullable: false })
+  @JoinColumn({ name: 'nutrition_day_id' })
+  nutritionDay: NutritionDay;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
