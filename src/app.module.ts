@@ -9,6 +9,7 @@ import { NutritionCategory } from './nutrition/nutrition-category.entity';
 import { NutritionDay } from './nutrition/nutrition-day.entity';
 import { NutritionPlan } from './nutrition/nutrition-plan.entity';
 import { Meal } from './nutrition/meal.entity';
+import { ClientNutritionPlan } from './nutrition/client-nutrition-plan.entity';
 import { ClientModule } from './users/client.module';
 import { TrainerModule } from './users/trainer.module';
 import { AuthModule } from './auth/auth.module';
@@ -18,6 +19,7 @@ import { NutritionCategoryModule } from './nutrition/nutrition-category.module';
 import { NutritionDayModule } from './nutrition/nutrition-day.module';
 import { NutritionPlanModule } from './nutrition/nutrition-plan.module';
 import { MealModule } from './nutrition/meal.module';
+import { ClientNutritionPlanModule } from './nutrition/client-nutrition-plan.module';
 
 @Module({
   imports: [
@@ -28,7 +30,7 @@ import { MealModule } from './nutrition/meal.module';
       username: (process.env.DB_USERNAME as string) || 'postgres',
       password: (process.env.DB_PASSWORD as string) || 'password',
       database: (process.env.DB_NAME as string) || 'tryerfit',
-      entities: [Client, Trainer, ProgressReport, NutritionCategory, NutritionDay, NutritionPlan, Meal],
+      entities: [Client, Trainer, ProgressReport, NutritionCategory, NutritionDay, NutritionPlan, Meal, ClientNutritionPlan],
       synchronize: false,
     }),
     ClientModule,
@@ -40,6 +42,7 @@ import { MealModule } from './nutrition/meal.module';
     NutritionDayModule,
     NutritionPlanModule,
     MealModule,
+    ClientNutritionPlanModule,
   ],
   controllers: [AppController],
   providers: [AppService],
