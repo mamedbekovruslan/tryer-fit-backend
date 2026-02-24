@@ -20,6 +20,7 @@ import { NutritionDayModule } from './nutrition/nutrition-day.module';
 import { NutritionPlanModule } from './nutrition/nutrition-plan.module';
 import { MealModule } from './nutrition/meal.module';
 import { ClientNutritionPlanModule } from './nutrition/client-nutrition-plan.module';
+import { TrainerNutritionModule } from './nutrition/trainer-nutrition.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { ClientNutritionPlanModule } from './nutrition/client-nutrition-plan.mod
     NutritionPlanModule,
     MealModule,
     ClientNutritionPlanModule,
+    TrainerNutritionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

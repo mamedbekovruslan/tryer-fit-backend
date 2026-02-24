@@ -61,7 +61,7 @@ export class ClientNutritionPlanService {
     const clientPlan = new ClientNutritionPlan();
     clientPlan.client = client;
     clientPlan.nutritionPlan = nutritionPlan;
-    clientPlan.is_active = planData.isActive;
+    clientPlan.is_active = planData.isActive ?? true; // Устанавливаем значение по умолчанию
 
     return await this.clientNutritionPlanRepository.save(clientPlan);
   }

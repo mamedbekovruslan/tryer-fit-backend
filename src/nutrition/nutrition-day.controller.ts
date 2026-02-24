@@ -26,6 +26,11 @@ export class NutritionDayController {
     return await this.nutritionDayService.findAll();
   }
 
+  @Get('plan/:planId')
+  async findByPlan(@Param('planId') planId: number): Promise<NutritionDay[]> {
+    return await this.nutritionDayService.findByPlanId(planId);
+  }
+
   @Get('category/:categoryId')
   async findByCategory(@Param('categoryId') categoryId: number): Promise<NutritionDay[]> {
     return await this.nutritionDayService.findByCategoryId(categoryId);

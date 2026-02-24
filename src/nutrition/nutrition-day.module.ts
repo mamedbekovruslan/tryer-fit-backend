@@ -3,10 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { NutritionDay } from './nutrition-day.entity';
 import { NutritionDayService } from './nutrition-day.service';
 import { NutritionDayController } from './nutrition-day.controller';
-import { NutritionCategory } from './nutrition-category.entity';
+import { NutritionPlan } from './nutrition-plan.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NutritionDay, NutritionCategory])],
+  imports: [TypeOrmModule.forFeature([NutritionDay, NutritionPlan])],
   providers: [NutritionDayService],
   controllers: [NutritionDayController],
   exports: [NutritionDayService],

@@ -9,6 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { NutritionCategory } from '../nutrition/nutrition-category.entity';
+import { Trainer } from '../users/trainer.entity';
 
 @Entity({ name: 'nutrition_plans' })
 export class NutritionPlan {
@@ -24,6 +25,10 @@ export class NutritionPlan {
   @ManyToOne(() => NutritionCategory, { nullable: false })
   @JoinColumn({ name: 'nutrition_category_id' })
   nutritionCategory: NutritionCategory;
+
+  @ManyToOne(() => Trainer, { nullable: true, eager: false })
+  @JoinColumn({ name: 'trainer_id' })
+  trainer?: Trainer;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -8,6 +8,7 @@ import {
   Put,
   UseGuards,
   NotFoundException,
+  Req,
 } from '@nestjs/common';
 import { NutritionPlanService } from './nutrition-plan.service';
 import { NutritionPlan } from './nutrition-plan.entity';
@@ -26,6 +27,11 @@ export class NutritionPlanController {
     return await this.nutritionPlanService.findAll();
   }
 
+  @Get('trainer/:trainerId')
+  async findByTrainer(@Param('trainerId') trainerId: number): Promise<NutritionPlan[]> {
+    return await this.nutritionPlanService.findByTrainerId(trainerId);
+  }
+
   @Get('category/:categoryId')
   async findByCategory(@Param('categoryId') categoryId: number): Promise<NutritionPlan[]> {
     return await this.nutritionPlanService.findByCategoryId(categoryId);
@@ -34,9 +40,11 @@ export class NutritionPlanController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(
+    @Req() req,
     @Body() createNutritionPlanDto: CreateNutritionPlanDto,
   ): Promise<NutritionPlan> {
-    return await this.nutritionPlanService.create(createNutritionPlanDto);
+    const trainerId = req.user.userId;
+    return await this.nutritionPlanService.create(createNutritionPlanDto, trainerId);
   }
 
   @Get(':id')

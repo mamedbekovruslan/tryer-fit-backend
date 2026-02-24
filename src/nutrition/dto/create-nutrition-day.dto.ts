@@ -13,5 +13,5 @@ export class CreateNutritionDayDto {
 
   @IsNumber()
   @IsNotEmpty()
-  nutritionCategoryId: number;
+  nutritionPlanId: number;
 }

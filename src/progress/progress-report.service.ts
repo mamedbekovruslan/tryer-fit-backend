@@ -153,18 +153,21 @@ export class ProgressReportService {
     return await this.progressReportRepository.find({
       where: whereCondition,
       order: { date: 'DESC' }, // Сортируем по дате в порядке убывания
+      relations: ['client'], // Включаем информацию о клиенте
     });
   }
 
   async findOne(id: number, clientId: number): Promise<ProgressReport | null> {
     return await this.progressReportRepository.findOne({
       where: { id, client: { id: clientId } },
+      relations: ['client'], // Включаем информацию о клиенте
     });
   }
 
   async update(id: number, clientId: number, updateProgressReportDto: UpdateProgressReportDto): Promise<ProgressReport> {
     const report = await this.progressReportRepository.findOne({
       where: { id, client: { id: clientId } },
+      relations: ['client'], // Включаем информацию о клиенте
     });
 
     if (!report) {

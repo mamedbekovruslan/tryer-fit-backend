@@ -2,47 +2,59 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NutritionDay } from './nutrition-day.entity';
+import { NutritionPlan } from './nutrition-plan.entity';
 import { CreateNutritionDayDto } from './dto/create-nutrition-day.dto';
 import { UpdateNutritionDayDto } from './dto/update-nutrition-day.dto';
-import { NutritionCategory } from './nutrition-category.entity';
 
 @Injectable()
 export class NutritionDayService {
   constructor(
     @InjectRepository(NutritionDay)
     private nutritionDayRepository: Repository<NutritionDay>,
-    @InjectRepository(NutritionCategory)
-    private nutritionCategoryRepository: Repository<NutritionCategory>,
+    @InjectRepository(NutritionPlan)
+    private nutritionPlanRepository: Repository<NutritionPlan>,
   ) {}
 
   async findAll(): Promise<NutritionDay[]> {
     return await this.nutritionDayRepository.find({
-      relations: ['nutritionCategory'],
+      relations: ['nutritionPlan', 'nutritionPlan.nutritionCategory'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  async findByPlanId(planId: number): Promise<NutritionDay[]> {
+    return await this.nutritionDayRepository.find({
+      where: { nutritionPlan: { id: planId } },
+      relations: ['nutritionPlan', 'nutritionPlan.nutritionCategory', 'meals'],
       order: { name: 'ASC' },
     });
   }
 
   async findByCategoryId(categoryId: number): Promise<NutritionDay[]> {
     return await this.nutritionDayRepository.find({
-      where: { nutritionCategory: { id: categoryId } },
+      where: { nutritionPlan: { nutritionCategory: { id: categoryId } } },
+      relations: ['nutritionPlan', 'nutritionPlan.nutritionCategory', 'meals'],
       order: { name: 'ASC' },
     });
   }
 
   async create(dayData: CreateNutritionDayDto): Promise<NutritionDay> {
-    // Найдем категорию по ID
-    const category = await this.nutritionCategoryRepository.findOne({
-      where: { id: dayData.nutritionCategoryId },
+    // Найдем план по ID
+    const plan = await this.nutritionPlanRepository.findOne({
+      where: { id: dayData.nutritionPlanId },
+      relations: ['nutritionCategory'], // Загружаем связанную категорию
     });
 
-    if (!category) {
-      throw new NotFoundException(`Nutrition category with ID ${dayData.nutritionCategoryId} not found`);
+    if (!plan) {
+      throw new NotFoundException(`Nutrition plan with ID ${dayData.nutritionPlanId} not found`);
     }
 
     const day = new NutritionDay();
     day.name = dayData.name;
     day.description = dayData.description;
-    day.nutritionCategory = category; // Присваиваем объект категории
+    day.nutritionPlan = plan; // Присваиваем объект плана
+    // Автоматически устанавливаем ID категории из плана
+    day.nutritionCategoryId = plan.nutritionCategory ? plan.nutritionCategory.id : undefined;
 
     return await this.nutritionDayRepository.save(day);
   }
@@ -50,7 +62,7 @@ export class NutritionDayService {
   async findOne(id: number): Promise<NutritionDay | null> {
     return await this.nutritionDayRepository.findOne({
       where: { id },
-      relations: ['nutritionCategory'],
+      relations: ['nutritionPlan', 'nutritionPlan.nutritionCategory'],
     });
   }
 
@@ -60,17 +72,20 @@ export class NutritionDayService {
       throw new NotFoundException(`Nutrition day with ID ${id} not found`);
     }
 
-    // Если передан ID категории, обновим связь
-    if (dayData.nutritionCategoryId) {
-      const category = await this.nutritionCategoryRepository.findOne({
-        where: { id: dayData.nutritionCategoryId },
+    // Если передан ID плана, обновим связь
+    if (dayData.nutritionPlanId) {
+      const plan = await this.nutritionPlanRepository.findOne({
+        where: { id: dayData.nutritionPlanId },
+        relations: ['nutritionCategory'], // Загружаем связанную категорию
       });
 
-      if (!category) {
-        throw new NotFoundException(`Nutrition category with ID ${dayData.nutritionCategoryId} not found`);
+      if (!plan) {
+        throw new NotFoundException(`Nutrition plan with ID ${dayData.nutritionPlanId} not found`);
       }
 
-      existingDay.nutritionCategory = category;
+      existingDay.nutritionPlan = plan;
+      // Автоматически устанавливаем ID категории из плана
+      existingDay.nutritionCategoryId = plan.nutritionCategory ? plan.nutritionCategory.id : undefined;
     }
 
     existingDay.name = dayData.name ?? existingDay.name;
@@ -79,7 +94,8 @@ export class NutritionDayService {
     await this.nutritionDayRepository.update(id, {
       name: existingDay.name,
       description: existingDay.description,
-      nutritionCategory: existingDay.nutritionCategory,
+      nutritionPlan: existingDay.nutritionPlan,
+      nutritionCategoryId: existingDay.nutritionCategoryId,
     });
 
     const updatedDay = await this.findOne(id);

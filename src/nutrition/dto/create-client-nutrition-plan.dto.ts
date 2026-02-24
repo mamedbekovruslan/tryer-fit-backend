@@ -1,4 +1,4 @@
-import { IsNumber, IsBoolean } from 'class-validator';
+import { IsNumber, IsBoolean, IsOptional } from 'class-validator';
 
 export class CreateClientNutritionPlanDto {
   @IsNumber()
@@ -8,5 +8,6 @@ export class CreateClientNutritionPlanDto {
   nutritionPlanId: number;
 
   @IsBoolean()
-  isActive: boolean;
+  @IsOptional()
+  isActive?: boolean;
 }

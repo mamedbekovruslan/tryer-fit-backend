@@ -13,5 +13,5 @@ export class UpdateNutritionDayDto {
 
   @IsNumber()
   @IsOptional()
-  nutritionCategoryId?: number;
+  nutritionPlanId?: number;
 }
