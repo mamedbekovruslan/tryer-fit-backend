@@ -27,6 +27,8 @@ import { MealModule } from './nutrition/meal.module';
 import { ClientNutritionPlanModule } from './nutrition/client-nutrition-plan.module';
 import { TrainerNutritionModule } from './nutrition/trainer-nutrition.module';
 import { TrainerWorkoutModule } from './workout/trainer-workout.module';
+import { ChatModule } from './chat/chat.module';
+import { ChatMessage } from './chat/chat-message.entity';
 
 @Module({
   imports: [
@@ -37,7 +39,7 @@ import { TrainerWorkoutModule } from './workout/trainer-workout.module';
       username: (process.env.DB_USERNAME as string) || 'postgres',
       password: (process.env.DB_PASSWORD as string) || 'password',
       database: (process.env.DB_NAME as string) || 'tryerfit',
-      entities: [Client, Trainer, ProgressReport, NutritionCategory, NutritionDay, NutritionPlan, Meal, ClientNutritionPlan, WorkoutCategory, WorkoutProgram, WorkoutDay, Exercise, ClientWorkoutProgram],
+      entities: [Client, Trainer, ProgressReport, NutritionCategory, NutritionDay, NutritionPlan, Meal, ClientNutritionPlan, WorkoutCategory, WorkoutProgram, WorkoutDay, Exercise, ClientWorkoutProgram, ChatMessage],
       synchronize: false,
     }),
     ClientModule,
@@ -52,6 +54,7 @@ import { TrainerWorkoutModule } from './workout/trainer-workout.module';
     ClientNutritionPlanModule,
     TrainerNutritionModule,
     TrainerWorkoutModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
