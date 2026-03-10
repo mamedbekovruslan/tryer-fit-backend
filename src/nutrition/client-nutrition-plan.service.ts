@@ -34,11 +34,15 @@ export class ClientNutritionPlanService {
   }
 
   async findByClientIdAndActive(clientId: number): Promise<ClientNutritionPlan[]> {
-    return await this.clientNutritionPlanRepository.find({
-      where: { client: { id: clientId }, is_active: true },
-      relations: ['client', 'nutritionPlan', 'nutritionPlan.nutritionCategory'],
-      order: { assignedAt: 'DESC' },
-    });
+    return await this.clientNutritionPlanRepository
+      .createQueryBuilder('clientNutritionPlan')
+      .leftJoinAndSelect('clientNutritionPlan.client', 'client')
+      .leftJoinAndSelect('clientNutritionPlan.nutritionPlan', 'nutritionPlan')
+      .leftJoinAndSelect('nutritionPlan.nutritionCategory', 'nutritionCategory')
+      .where('client.id = :clientId', { clientId })
+      .andWhere('clientNutritionPlan.is_active = :isActive', { isActive: true })
+      .orderBy('clientNutritionPlan.assigned_at', 'DESC')
+      .getMany();
   }
 
   async create(planData: CreateClientNutritionPlanDto): Promise<ClientNutritionPlan> {
