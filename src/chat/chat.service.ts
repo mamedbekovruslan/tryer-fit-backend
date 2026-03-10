@@ -137,6 +137,7 @@ export class ChatService {
       return [{
         userId: client.trainer.id,
         username: `${client.trainer.first_name || ''} ${client.trainer.last_name || ''}`.trim() || client.trainer.username,
+        photo_urls: client.trainer.photo_urls,
         lastMessage,
         unreadCount,
       }];
@@ -173,6 +174,7 @@ export class ChatService {
           userId: client.id,
           username: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.username,
           email: client.email,
+          photo_urls: client.photo_urls,
           lastMessage,
           unreadCount,
         });
