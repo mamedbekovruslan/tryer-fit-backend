@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { Client } from './users/client.entity';
 import { Trainer } from './users/trainer.entity';
 import { ProgressReport } from './progress/progress-report.entity';
+import { ProgressReportComment } from './progress/progress-report-comment.entity';
 import { NutritionCategory } from './nutrition/nutrition-category.entity';
 import { NutritionDay } from './nutrition/nutrition-day.entity';
 import { NutritionPlan } from './nutrition/nutrition-plan.entity';
@@ -39,7 +40,7 @@ import { ChatMessage } from './chat/chat-message.entity';
       username: (process.env.DB_USERNAME as string) || 'postgres',
       password: (process.env.DB_PASSWORD as string) || 'password',
       database: (process.env.DB_NAME as string) || 'tryerfit',
-      entities: [Client, Trainer, ProgressReport, NutritionCategory, NutritionDay, NutritionPlan, Meal, ClientNutritionPlan, WorkoutCategory, WorkoutProgram, WorkoutDay, Exercise, ClientWorkoutProgram, ChatMessage],
+      entities: [Client, Trainer, ProgressReport, ProgressReportComment, NutritionCategory, NutritionDay, NutritionPlan, Meal, ClientNutritionPlan, WorkoutCategory, WorkoutProgram, WorkoutDay, Exercise, ClientWorkoutProgram, ChatMessage],
       synchronize: false,
     }),
     ClientModule,

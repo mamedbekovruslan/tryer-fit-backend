@@ -14,6 +14,8 @@ import { ProgressReportService } from './progress-report.service';
 import type { CreateProgressReportDto, UpdateProgressReportDto } from './progress-report.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProgressReport } from './progress-report.entity';
+import { ProgressReportComment } from './progress-report-comment.entity';
+import { CreateProgressReportCommentDto } from './dto/create-progress-report-comment.dto';
 
 @Controller('progress-reports')
 export class ProgressReportController {
@@ -61,6 +63,22 @@ export class ProgressReportController {
     return [];
   }
 
+  @Get('client/:clientId')
+  @UseGuards(JwtAuthGuard)
+  async findAllByTrainerForClient(
+    @Request() req,
+    @Param('clientId') clientId: string,
+  ): Promise<ProgressReport[]> {
+    if (req.user.user_type !== 'trainer') {
+      throw new BadRequestException('Only trainers can access client progress reports');
+    }
+
+    return await this.progressReportService.findAllByTrainerClient(
+      req.user.sub,
+      parseInt(clientId, 10),
+    );
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   async findOne(@Request() req, @Param('id') id: string): Promise<ProgressReport> {
@@ -76,7 +94,42 @@ export class ProgressReportController {
     }
     
     // Тренеры могут получать отчеты своих клиентов (реализация для будущего использования)
+    if (req.user.user_type === 'trainer') {
+      const report = await this.progressReportService.findOneForTrainer(reportId, req.user.sub);
+      if (!report) {
+        throw new BadRequestException('Progress report not found');
+      }
+      return report;
+    }
+
     throw new BadRequestException('Access denied');
+  }
+
+  @Get(':id/comments')
+  @UseGuards(JwtAuthGuard)
+  async getComments(@Request() req, @Param('id') id: string): Promise<ProgressReportComment[]> {
+    return await this.progressReportService.getComments(parseInt(id, 10), {
+      userType: req.user.user_type,
+      userId: req.user.sub,
+    });
+  }
+
+  @Post(':id/comments')
+  @UseGuards(JwtAuthGuard)
+  async addComment(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() createCommentDto: CreateProgressReportCommentDto,
+  ): Promise<ProgressReportComment> {
+    if (req.user.user_type !== 'trainer') {
+      throw new BadRequestException('Only trainers can add comments');
+    }
+
+    return await this.progressReportService.addComment(
+      parseInt(id, 10),
+      req.user.sub,
+      createCommentDto.comment,
+    );
   }
 
   @Put(':id')

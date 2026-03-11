@@ -6,8 +6,10 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Client } from '../users/client.entity';
+import { ProgressReportComment } from './progress-report-comment.entity';
 
 @Entity({ name: 'progress_reports' })
 export class ProgressReport {
@@ -56,4 +58,9 @@ export class ProgressReport {
   @ManyToOne(() => Client, { nullable: false })
   @JoinColumn({ name: 'client_id' })
   client: Client;
+
+  @OneToMany(() => ProgressReportComment, (comment) => comment.report, {
+    cascade: false,
+  })
+  comments?: ProgressReportComment[];
 }
