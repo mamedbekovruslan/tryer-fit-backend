@@ -19,7 +19,10 @@ export class WorkoutCategory {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @OneToMany(() => WorkoutProgram, (workoutProgram) => workoutProgram.workoutCategory)
+  @OneToMany(
+    () => WorkoutProgram,
+    (workoutProgram) => workoutProgram.workoutCategory,
+  )
   workoutPrograms: WorkoutProgram[];
 
   @CreateDateColumn({ name: 'created_at' })

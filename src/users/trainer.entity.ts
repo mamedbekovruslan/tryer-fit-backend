@@ -71,6 +71,6 @@ export class Trainer {
   @UpdateDateColumn({ name: 'updated_at' })
   updated_at: Date;
 
-  @OneToMany(() => Client, client => client.trainer)
+  @OneToMany(() => Client, (client) => client.trainer)
   clients?: Client[];
 }

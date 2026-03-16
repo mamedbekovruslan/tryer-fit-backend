@@ -18,7 +18,11 @@ import { Trainer } from '../users/trainer.entity';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'default_secret_key',
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ? parseInt(process.env.JWT_EXPIRES_IN, 10) || 3600 : 3600 },
+      signOptions: {
+        expiresIn: process.env.JWT_EXPIRES_IN
+          ? parseInt(process.env.JWT_EXPIRES_IN, 10) || 3600
+          : 3600,
+      },
     }),
   ],
   controllers: [AuthController],

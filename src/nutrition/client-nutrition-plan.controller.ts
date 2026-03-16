@@ -10,10 +10,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ClientNutritionPlanService } from './client-nutrition-plan.service';
-import { ClientNutritionPlan } from './client-nutrition-plan.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateClientNutritionPlanDto } from './dto/create-client-nutrition-plan.dto';
 import { UpdateClientNutritionPlanDto } from './dto/update-client-nutrition-plan.dto';
+import {
+  ClientNutritionPlanResponse,
+  toClientNutritionPlanResponse,
+} from './nutrition-response';
 
 @Controller('client-nutrition-plans')
 export class ClientNutritionPlanController {
@@ -23,37 +26,51 @@ export class ClientNutritionPlanController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll(): Promise<ClientNutritionPlan[]> {
-    return await this.clientNutritionPlanService.findAll();
+  async findAll(): Promise<ClientNutritionPlanResponse[]> {
+    const plans = await this.clientNutritionPlanService.findAll();
+    return plans.map(toClientNutritionPlanResponse);
   }
 
   @Get('client/:clientId')
   @UseGuards(JwtAuthGuard)
-  async findByClient(@Param('clientId') clientId: number): Promise<ClientNutritionPlan[]> {
-    return await this.clientNutritionPlanService.findByClientId(clientId);
+  async findByClient(
+    @Param('clientId') clientId: number,
+  ): Promise<ClientNutritionPlanResponse[]> {
+    const plans =
+      await this.clientNutritionPlanService.findByClientId(clientId);
+    return plans.map(toClientNutritionPlanResponse);
   }
 
   @Get('client/:clientId/active')
-  async findByClientAndActive(@Param('clientId') clientId: number): Promise<ClientNutritionPlan[]> {
-    return await this.clientNutritionPlanService.findByClientIdAndActive(clientId);
+  async findByClientAndActive(
+    @Param('clientId') clientId: number,
+  ): Promise<ClientNutritionPlanResponse[]> {
+    const plans =
+      await this.clientNutritionPlanService.findByClientIdAndActive(clientId);
+    return plans.map(toClientNutritionPlanResponse);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(
     @Body() createClientNutritionPlanDto: CreateClientNutritionPlanDto,
-  ): Promise<ClientNutritionPlan> {
-    return await this.clientNutritionPlanService.create(createClientNutritionPlanDto);
+  ): Promise<ClientNutritionPlanResponse> {
+    const plan = await this.clientNutritionPlanService.create(
+      createClientNutritionPlanDto,
+    );
+    return toClientNutritionPlanResponse(plan);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Param('id') id: number): Promise<ClientNutritionPlan> {
+  async findOne(@Param('id') id: number): Promise<ClientNutritionPlanResponse> {
     const plan = await this.clientNutritionPlanService.findOne(id);
     if (!plan) {
-      throw new NotFoundException(`Client nutrition plan with ID ${id} not found`);
+      throw new NotFoundException(
+        `Client nutrition plan with ID ${id} not found`,
+      );
     }
-    return plan;
+    return toClientNutritionPlanResponse(plan);
   }
 
   @Put(':id')
@@ -61,8 +78,12 @@ export class ClientNutritionPlanController {
   async update(
     @Param('id') id: number,
     @Body() updateClientNutritionPlanDto: UpdateClientNutritionPlanDto,
-  ): Promise<ClientNutritionPlan> {
-    return await this.clientNutritionPlanService.update(id, updateClientNutritionPlanDto);
+  ): Promise<ClientNutritionPlanResponse> {
+    const plan = await this.clientNutritionPlanService.update(
+      id,
+      updateClientNutritionPlanDto,
+    );
+    return toClientNutritionPlanResponse(plan);
   }
 
   @Delete(':id')

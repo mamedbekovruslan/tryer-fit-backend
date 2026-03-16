@@ -46,7 +46,9 @@ export class NutritionDayService {
     });
 
     if (!plan) {
-      throw new NotFoundException(`Nutrition plan with ID ${dayData.nutritionPlanId} not found`);
+      throw new NotFoundException(
+        `Nutrition plan with ID ${dayData.nutritionPlanId} not found`,
+      );
     }
 
     const day = new NutritionDay();
@@ -54,7 +56,9 @@ export class NutritionDayService {
     day.description = dayData.description;
     day.nutritionPlan = plan; // Присваиваем объект плана
     // Автоматически устанавливаем ID категории из плана
-    day.nutritionCategoryId = plan.nutritionCategory ? plan.nutritionCategory.id : undefined;
+    day.nutritionCategoryId = plan.nutritionCategory
+      ? plan.nutritionCategory.id
+      : undefined;
 
     return await this.nutritionDayRepository.save(day);
   }
@@ -66,7 +70,10 @@ export class NutritionDayService {
     });
   }
 
-  async update(id: number, dayData: UpdateNutritionDayDto): Promise<NutritionDay> {
+  async update(
+    id: number,
+    dayData: UpdateNutritionDayDto,
+  ): Promise<NutritionDay> {
     const existingDay = await this.findOne(id);
     if (!existingDay) {
       throw new NotFoundException(`Nutrition day with ID ${id} not found`);
@@ -80,12 +87,16 @@ export class NutritionDayService {
       });
 
       if (!plan) {
-        throw new NotFoundException(`Nutrition plan with ID ${dayData.nutritionPlanId} not found`);
+        throw new NotFoundException(
+          `Nutrition plan with ID ${dayData.nutritionPlanId} not found`,
+        );
       }
 
       existingDay.nutritionPlan = plan;
       // Автоматически устанавливаем ID категории из плана
-      existingDay.nutritionCategoryId = plan.nutritionCategory ? plan.nutritionCategory.id : undefined;
+      existingDay.nutritionCategoryId = plan.nutritionCategory
+        ? plan.nutritionCategory.id
+        : undefined;
     }
 
     existingDay.name = dayData.name ?? existingDay.name;
@@ -100,7 +111,9 @@ export class NutritionDayService {
 
     const updatedDay = await this.findOne(id);
     if (!updatedDay) {
-      throw new NotFoundException(`Nutrition day with ID ${id} not found after update`);
+      throw new NotFoundException(
+        `Nutrition day with ID ${id} not found after update`,
+      );
     }
     return updatedDay;
   }

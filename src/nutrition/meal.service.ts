@@ -36,7 +36,9 @@ export class MealService {
     });
 
     if (!nutritionDay) {
-      throw new NotFoundException(`Nutrition day with ID ${mealData.nutritionDayId} not found`);
+      throw new NotFoundException(
+        `Nutrition day with ID ${mealData.nutritionDayId} not found`,
+      );
     }
 
     const meal = new Meal();
@@ -67,7 +69,9 @@ export class MealService {
       });
 
       if (!nutritionDay) {
-        throw new NotFoundException(`Nutrition day with ID ${mealData.nutritionDayId} not found`);
+        throw new NotFoundException(
+          `Nutrition day with ID ${mealData.nutritionDayId} not found`,
+        );
       }
 
       existingMeal.nutritionDay = nutritionDay;

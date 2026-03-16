@@ -10,10 +10,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { NutritionCategoryService } from './nutrition-category.service';
-import { NutritionCategory } from './nutrition-category.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateNutritionCategoryDto } from './dto/create-nutrition-category.dto';
 import { UpdateNutritionCategoryDto } from './dto/update-nutrition-category.dto';
+import {
+  NutritionCategoryResponse,
+  toNutritionCategoryResponse,
+} from './nutrition-response';
 
 @Controller('nutrition-categories')
 export class NutritionCategoryController {
@@ -22,25 +25,29 @@ export class NutritionCategoryController {
   ) {}
 
   @Get()
-  async findAll(): Promise<NutritionCategory[]> {
-    return await this.nutritionCategoryService.findAll();
+  async findAll(): Promise<NutritionCategoryResponse[]> {
+    const categories = await this.nutritionCategoryService.findAll();
+    return categories.map(toNutritionCategoryResponse);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(
     @Body() createNutritionCategoryDto: CreateNutritionCategoryDto,
-  ): Promise<NutritionCategory> {
-    return await this.nutritionCategoryService.create(createNutritionCategoryDto);
+  ): Promise<NutritionCategoryResponse> {
+    const category = await this.nutritionCategoryService.create(
+      createNutritionCategoryDto,
+    );
+    return toNutritionCategoryResponse(category);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number): Promise<NutritionCategory> {
+  async findOne(@Param('id') id: number): Promise<NutritionCategoryResponse> {
     const category = await this.nutritionCategoryService.findOne(id);
     if (!category) {
       throw new NotFoundException(`Nutrition category with ID ${id} not found`);
     }
-    return category;
+    return toNutritionCategoryResponse(category);
   }
 
   @Put(':id')
@@ -48,8 +55,12 @@ export class NutritionCategoryController {
   async update(
     @Param('id') id: number,
     @Body() updateNutritionCategoryDto: UpdateNutritionCategoryDto,
-  ): Promise<NutritionCategory> {
-    return await this.nutritionCategoryService.update(id, updateNutritionCategoryDto);
+  ): Promise<NutritionCategoryResponse> {
+    const category = await this.nutritionCategoryService.update(
+      id,
+      updateNutritionCategoryDto,
+    );
+    return toNutritionCategoryResponse(category);
   }
 
   @Delete(':id')

@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { ProgressReport } from './progress-report.entity';
@@ -6,6 +10,8 @@ import { ProgressReportComment } from './progress-report-comment.entity';
 import { Client } from '../users/client.entity';
 import { ClientService } from '../users/client.service';
 import { Trainer } from '../users/trainer.entity';
+import { AccessControlService } from '../auth/access-control.service';
+import type { AuthUser } from '../auth/auth.types';
 
 export interface CreateProgressReportDto {
   date: Date;
@@ -50,18 +56,19 @@ export class ProgressReportService {
     @InjectRepository(Trainer)
     private trainerRepository: Repository<Trainer>,
     private clientService: ClientService,
+    private accessControlService: AccessControlService,
   ) {}
 
-  async create(createProgressReportDto: CreateProgressReportDto): Promise<ProgressReport> {
-    console.log('Creating progress report with DTO:', createProgressReportDto);
-
+  async create(
+    createProgressReportDto: CreateProgressReportDto,
+  ): Promise<ProgressReport> {
     // Находим клиента
-    const client = await this.clientService.findById(createProgressReportDto.clientId);
+    const client = await this.clientService.findById(
+      createProgressReportDto.clientId,
+    );
     if (!client) {
-      throw new BadRequestException('Client not found');
+      throw new NotFoundException('Client not found');
     }
-
-    console.log('Found client:', client.id);
 
     // Создаем новый отчет о прогрессе
     const progressReport = new ProgressReport();
@@ -78,12 +85,9 @@ export class ProgressReportService {
     progressReport.photoUrls = createProgressReportDto.photoUrls;
     progressReport.client = client;
 
-    console.log('Progress report entity before saving:', progressReport);
-
     // Сохраняем отчет
-    const savedReport = await this.progressReportRepository.save(progressReport);
-
-    console.log('Saved report:', savedReport);
+    const savedReport =
+      await this.progressReportRepository.save(progressReport);
 
     // Обновляем соответствующие поля в профиле клиента
     await this.updateClientProfileWithProgressData(client.id, {
@@ -101,7 +105,9 @@ export class ProgressReportService {
   }
 
   async findAllByClient(clientId: number): Promise<ProgressReport[]> {
-    const whereCondition: FindOptionsWhere<ProgressReport> = { client: { id: clientId } };
+    const whereCondition: FindOptionsWhere<ProgressReport> = {
+      client: { id: clientId },
+    };
     const relations = await this.getProgressReportRelations();
 
     return await this.progressReportRepository.find({
@@ -120,8 +126,14 @@ export class ProgressReportService {
     });
   }
 
-  async findAllByTrainerClient(trainerId: number, clientId: number): Promise<ProgressReport[]> {
-    await this.ensureTrainerOwnsClient(trainerId, clientId);
+  async findAllByTrainerClient(
+    trainerId: number,
+    clientId: number,
+  ): Promise<ProgressReport[]> {
+    await this.accessControlService.assertTrainerOwnsClient(
+      trainerId,
+      clientId,
+    );
     const relations = await this.getProgressReportRelations();
 
     return await this.progressReportRepository.find({
@@ -131,7 +143,10 @@ export class ProgressReportService {
     });
   }
 
-  async findOneForTrainer(id: number, trainerId: number): Promise<ProgressReport | null> {
+  async findOneForTrainer(
+    id: number,
+    trainerId: number,
+  ): Promise<ProgressReport | null> {
     const relations = await this.getProgressReportRelations(true);
     const report = await this.progressReportRepository.findOne({
       where: { id },
@@ -143,13 +158,16 @@ export class ProgressReportService {
     }
 
     if (report.client?.trainer?.id !== trainerId) {
-      throw new BadRequestException('Progress report not found or client is not assigned to you');
+      throw new ForbiddenException('Client is not assigned to this trainer');
     }
 
     return report;
   }
 
-  async getComments(reportId: number, actor: { userType: 'client' | 'trainer'; userId: number }): Promise<ProgressReportComment[]> {
+  async getComments(
+    reportId: number,
+    actor: { userType: 'client' | 'trainer'; userId: number },
+  ): Promise<ProgressReportComment[]> {
     if (!(await this.hasProgressReportCommentsTable())) {
       return [];
     }
@@ -163,21 +181,27 @@ export class ProgressReportService {
     });
   }
 
-  async addComment(reportId: number, trainerId: number, commentText: string): Promise<ProgressReportComment> {
+  async addComment(
+    reportId: number,
+    trainerId: number,
+    commentText: string,
+  ): Promise<ProgressReportComment> {
     if (!(await this.hasProgressReportCommentsTable())) {
-      throw new BadRequestException(
+      throw new NotFoundException(
         'Таблица комментариев к отчетам еще не создана. Запустите миграции backend.',
       );
     }
 
     const report = await this.findOneForTrainer(reportId, trainerId);
     if (!report) {
-      throw new BadRequestException('Progress report not found');
+      throw new NotFoundException('Progress report not found');
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
-      throw new BadRequestException('Trainer not found');
+      throw new NotFoundException('Trainer not found');
     }
 
     const comment = this.progressReportCommentRepository.create({
@@ -189,14 +213,18 @@ export class ProgressReportService {
     return await this.progressReportCommentRepository.save(comment);
   }
 
-  async update(id: number, clientId: number, updateProgressReportDto: UpdateProgressReportDto): Promise<ProgressReport> {
+  async update(
+    id: number,
+    clientId: number,
+    updateProgressReportDto: UpdateProgressReportDto,
+  ): Promise<ProgressReport> {
     const report = await this.progressReportRepository.findOne({
       where: { id, client: { id: clientId } },
       relations: ['client'], // Включаем информацию о клиенте
     });
 
     if (!report) {
-      throw new BadRequestException('Progress report not found or does not belong to the client');
+      throw new NotFoundException('Progress report not found');
     }
 
     // Обновляем поля отчета
@@ -226,22 +254,25 @@ export class ProgressReportService {
     });
 
     if (!report) {
-      throw new BadRequestException('Progress report not found or does not belong to the client');
+      throw new NotFoundException('Progress report not found');
     }
 
     await this.progressReportRepository.remove(report);
   }
 
-  private async updateClientProfileWithProgressData(clientId: number, progressData: {
-    weight?: number;
-    waist_circumference?: number;
-    hip_circumference?: number;
-    chest_circumference?: number;
-    arm_circumference?: number;
-    leg_circumference?: number;
-    body_fat?: number;
-    muscle_mass?: number;
-  }) {
+  private async updateClientProfileWithProgressData(
+    clientId: number,
+    progressData: {
+      weight?: number;
+      waist_circumference?: number;
+      hip_circumference?: number;
+      chest_circumference?: number;
+      arm_circumference?: number;
+      leg_circumference?: number;
+      body_fat?: number;
+      muscle_mass?: number;
+    },
+  ) {
     // Обновляем только те поля, которые предоставлены
     const updateData: Partial<Client> = {};
 
@@ -276,21 +307,14 @@ export class ProgressReportService {
     }
   }
 
-  private async ensureTrainerOwnsClient(trainerId: number, clientId: number): Promise<Client> {
-    const client = await this.clientRepository.findOne({
-      where: { id: clientId },
-      relations: ['trainer'],
-    });
-
-    if (!client) {
-      throw new BadRequestException('Client not found');
-    }
-
-    if (!client.trainer || client.trainer.id !== trainerId) {
-      throw new BadRequestException('Client is not assigned to this trainer');
-    }
-
-    return client;
+  private async ensureTrainerOwnsClient(
+    trainerId: number,
+    clientId: number,
+  ): Promise<Client> {
+    return this.accessControlService.assertTrainerOwnsClient(
+      trainerId,
+      clientId,
+    );
   }
 
   private async getAccessibleReport(
@@ -303,21 +327,25 @@ export class ProgressReportService {
     });
 
     if (!report) {
-      throw new BadRequestException('Progress report not found');
+      throw new NotFoundException('Progress report not found');
     }
 
-    if (actor.userType === 'client' && report.client.id !== actor.userId) {
-      throw new BadRequestException('Access denied');
-    }
-
-    if (actor.userType === 'trainer' && report.client.trainer?.id !== actor.userId) {
-      throw new BadRequestException('Access denied');
-    }
+    this.accessControlService.assertUserCanAccessClientResource(
+      {
+        sub: actor.userId,
+        userId: actor.userId,
+        user_type: actor.userType,
+      } as AuthUser,
+      report.client.id,
+      report.client.trainer?.id,
+    );
 
     return report;
   }
 
-  private async getProgressReportRelations(includeClientTrainer: boolean = false): Promise<string[]> {
+  private async getProgressReportRelations(
+    includeClientTrainer: boolean = false,
+  ): Promise<string[]> {
     const relations = ['client'];
 
     if (includeClientTrainer) {
@@ -336,7 +364,7 @@ export class ProgressReportService {
       return this.commentsTableExists;
     }
 
-    const result = await this.progressReportRepository.query(
+    const rawResult: unknown = await this.progressReportRepository.query(
       `SELECT EXISTS (
         SELECT 1
         FROM information_schema.tables
@@ -344,6 +372,7 @@ export class ProgressReportService {
           AND table_name = 'progress_report_comments'
       ) AS exists`,
     );
+    const result = rawResult as Array<{ exists: boolean }>;
 
     this.commentsTableExists = Boolean(result?.[0]?.exists);
     return this.commentsTableExists;

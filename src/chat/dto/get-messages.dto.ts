@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class GetMessagesDto {
   @IsInt()

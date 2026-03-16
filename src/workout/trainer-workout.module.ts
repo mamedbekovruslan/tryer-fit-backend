@@ -10,6 +10,7 @@ import { Exercise } from './exercise.entity';
 import { ClientWorkoutProgram } from './client-workout-program.entity';
 import { Trainer } from '../users/trainer.entity';
 import { Client } from '../users/client.entity';
+import { AccessControlModule } from '../auth/access-control.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Client } from '../users/client.entity';
       Trainer,
       Client,
     ]),
+    AccessControlModule,
   ],
   controllers: [TrainerWorkoutController, WorkoutController],
   providers: [TrainerWorkoutService],

@@ -78,13 +78,31 @@ export class Client {
   photo_urls?: string[];
 
   // Поля для хранения текущих данных прогресса
-  @Column({ name: 'weight', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'weight',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   weight?: number;
 
-  @Column({ name: 'body_fat', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'body_fat',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   body_fat?: number;
 
-  @Column({ name: 'muscle_mass', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'muscle_mass',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   muscle_mass?: number;
 
   @CreateDateColumn({ name: 'created_at' })

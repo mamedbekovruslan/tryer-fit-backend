@@ -4,11 +4,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
 } from 'typeorm';
-import { Client } from '../users/client.entity';
-import { Trainer } from '../users/trainer.entity';
 
 export enum SenderType {
   CLIENT = 'client',

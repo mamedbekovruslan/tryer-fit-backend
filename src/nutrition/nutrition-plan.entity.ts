@@ -6,7 +6,6 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
 } from 'typeorm';
 import { NutritionCategory } from '../nutrition/nutrition-category.entity';
 import { Trainer } from '../users/trainer.entity';

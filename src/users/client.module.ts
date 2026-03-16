@@ -5,9 +5,10 @@ import { Trainer } from './trainer.entity';
 import { ClientService } from './client.service';
 import { TrainerService } from './trainer.service';
 import { ClientController } from './client.controller';
+import { AccessControlModule } from '../auth/access-control.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Client, Trainer])],
+  imports: [TypeOrmModule.forFeature([Client, Trainer]), AccessControlModule],
   controllers: [ClientController],
   providers: [ClientService, TrainerService],
   exports: [ClientService],

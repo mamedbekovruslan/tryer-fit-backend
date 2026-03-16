@@ -7,7 +7,9 @@ import { Client } from '../users/client.entity';
 import { NutritionPlan } from './nutrition-plan.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ClientNutritionPlan, Client, NutritionPlan])],
+  imports: [
+    TypeOrmModule.forFeature([ClientNutritionPlan, Client, NutritionPlan]),
+  ],
   providers: [ClientNutritionPlanService],
   controllers: [ClientNutritionPlanController],
   exports: [ClientNutritionPlanService],

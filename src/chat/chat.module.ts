@@ -13,7 +13,11 @@ import { JwtModule } from '@nestjs/jwt';
     TypeOrmModule.forFeature([ChatMessage, Client, Trainer]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'default_secret_key',
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ? parseInt(process.env.JWT_EXPIRES_IN, 10) || 3600 : 3600 },
+      signOptions: {
+        expiresIn: process.env.JWT_EXPIRES_IN
+          ? parseInt(process.env.JWT_EXPIRES_IN, 10) || 3600
+          : 3600,
+      },
     }),
   ],
   providers: [ChatService, ChatGateway],

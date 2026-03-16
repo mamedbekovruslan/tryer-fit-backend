@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NutritionCategory } from './nutrition-category.entity';
@@ -26,7 +30,10 @@ export class TrainerNutritionService {
   ) {}
 
   // Nutrition Categories
-  async getTrainerNutritionCategories(trainerId: number): Promise<NutritionCategory[]> {
+  async getTrainerNutritionCategories(
+    trainerId: number,
+  ): Promise<NutritionCategory[]> {
+    void trainerId;
     // Since categories are shared among all trainers, we just return all categories
     // In a real implementation, you might want to track which trainer created which category
     return await this.nutritionCategoryRepository.find({
@@ -39,7 +46,9 @@ export class TrainerNutritionService {
     createCategoryDto: CreateNutritionCategoryDto,
   ): Promise<NutritionCategory> {
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -56,31 +65,47 @@ export class TrainerNutritionService {
     categoryId: number,
     updateCategoryDto: UpdateNutritionCategoryDto,
   ): Promise<NutritionCategory> {
-    const category = await this.nutritionCategoryRepository.findOne({ where: { id: categoryId } });
+    const category = await this.nutritionCategoryRepository.findOne({
+      where: { id: categoryId },
+    });
     if (!category) {
-      throw new NotFoundException(`Nutrition category with ID ${categoryId} not found`);
+      throw new NotFoundException(
+        `Nutrition category with ID ${categoryId} not found`,
+      );
     }
 
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     category.name = updateCategoryDto.name ?? category.name;
-    category.description = updateCategoryDto.description ?? category.description;
+    category.description =
+      updateCategoryDto.description ?? category.description;
 
     return await this.nutritionCategoryRepository.save(category);
   }
 
-  async deleteNutritionCategory(trainerId: number, categoryId: number): Promise<void> {
-    const category = await this.nutritionCategoryRepository.findOne({ where: { id: categoryId } });
+  async deleteNutritionCategory(
+    trainerId: number,
+    categoryId: number,
+  ): Promise<void> {
+    const category = await this.nutritionCategoryRepository.findOne({
+      where: { id: categoryId },
+    });
     if (!category) {
-      throw new NotFoundException(`Nutrition category with ID ${categoryId} not found`);
+      throw new NotFoundException(
+        `Nutrition category with ID ${categoryId} not found`,
+      );
     }
 
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -105,21 +130,27 @@ export class TrainerNutritionService {
     categoryId: number,
   ): Promise<NutritionPlan[]> {
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     // Verify category exists
-    const category = await this.nutritionCategoryRepository.findOne({ where: { id: categoryId } });
+    const category = await this.nutritionCategoryRepository.findOne({
+      where: { id: categoryId },
+    });
     if (!category) {
-      throw new NotFoundException(`Nutrition category with ID ${categoryId} not found`);
+      throw new NotFoundException(
+        `Nutrition category with ID ${categoryId} not found`,
+      );
     }
 
     return await this.nutritionPlanRepository.find({
-      where: { 
+      where: {
         nutritionCategory: { id: categoryId },
-        trainer: { id: trainerId }
+        trainer: { id: trainerId },
       },
       relations: ['nutritionCategory', 'trainer'],
       order: { name: 'ASC' },
@@ -131,7 +162,9 @@ export class TrainerNutritionService {
     createPlanDto: CreateNutritionPlanDto,
   ): Promise<NutritionPlan> {
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -141,7 +174,9 @@ export class TrainerNutritionService {
       where: { id: createPlanDto.nutritionCategoryId },
     });
     if (!category) {
-      throw new NotFoundException(`Nutrition category with ID ${createPlanDto.nutritionCategoryId} not found`);
+      throw new NotFoundException(
+        `Nutrition category with ID ${createPlanDto.nutritionCategoryId} not found`,
+      );
     }
 
     const plan = new NutritionPlan();
@@ -167,14 +202,18 @@ export class TrainerNutritionService {
     }
 
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     // Verify the plan belongs to the trainer
     if (plan.trainer && plan.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to update this nutrition plan`);
+      throw new ForbiddenException(
+        `You don't have permission to update this nutrition plan`,
+      );
     }
 
     // If a new category ID is provided, verify it exists
@@ -183,7 +222,9 @@ export class TrainerNutritionService {
         where: { id: updatePlanDto.nutritionCategoryId },
       });
       if (!category) {
-        throw new NotFoundException(`Nutrition category with ID ${updatePlanDto.nutritionCategoryId} not found`);
+        throw new NotFoundException(
+          `Nutrition category with ID ${updatePlanDto.nutritionCategoryId} not found`,
+        );
       }
       plan.nutritionCategory = category;
     }
@@ -204,14 +245,18 @@ export class TrainerNutritionService {
     }
 
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     // Verify the plan belongs to the trainer
     if (plan.trainer && plan.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to delete this nutrition plan`);
+      throw new ForbiddenException(
+        `You don't have permission to delete this nutrition plan`,
+      );
     }
 
     // Check if there are any days associated with this plan
@@ -234,7 +279,9 @@ export class TrainerNutritionService {
     planId: number,
   ): Promise<NutritionDay[]> {
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -249,7 +296,9 @@ export class TrainerNutritionService {
     }
 
     if (plan.trainer && plan.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to access this nutrition plan`);
+      throw new ForbiddenException(
+        `You don't have permission to access this nutrition plan`,
+      );
     }
 
     return await this.nutritionDayRepository.find({
@@ -264,7 +313,9 @@ export class TrainerNutritionService {
     createDayDto: CreateNutritionDayDto,
   ): Promise<NutritionDay> {
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -275,11 +326,15 @@ export class TrainerNutritionService {
       relations: ['nutritionCategory', 'trainer'],
     });
     if (!plan) {
-      throw new NotFoundException(`Nutrition plan with ID ${createDayDto.nutritionPlanId} not found`);
+      throw new NotFoundException(
+        `Nutrition plan with ID ${createDayDto.nutritionPlanId} not found`,
+      );
     }
 
     if (plan.trainer && plan.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to add days to this nutrition plan`);
+      throw new ForbiddenException(
+        `You don't have permission to add days to this nutrition plan`,
+      );
     }
 
     const day = new NutritionDay();
@@ -304,14 +359,21 @@ export class TrainerNutritionService {
     }
 
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     // Verify the plan belongs to the trainer
-    if (day.nutritionPlan.trainer && day.nutritionPlan.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to update this nutrition day`);
+    if (
+      day.nutritionPlan.trainer &&
+      day.nutritionPlan.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to update this nutrition day`,
+      );
     }
 
     // If a new plan ID is provided, verify it exists and belongs to the trainer
@@ -321,11 +383,15 @@ export class TrainerNutritionService {
         relations: ['nutritionCategory', 'trainer'],
       });
       if (!plan) {
-        throw new NotFoundException(`Nutrition plan with ID ${updateDayDto.nutritionPlanId} not found`);
+        throw new NotFoundException(
+          `Nutrition plan with ID ${updateDayDto.nutritionPlanId} not found`,
+        );
       }
 
       if (plan.trainer && plan.trainer.id !== trainerId) {
-        throw new ForbiddenException(`You don't have permission to use this nutrition plan`);
+        throw new ForbiddenException(
+          `You don't have permission to use this nutrition plan`,
+        );
       }
       day.nutritionPlan = plan;
     }
@@ -346,14 +412,21 @@ export class TrainerNutritionService {
     }
 
     // Verify trainer exists
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     // Verify the plan belongs to the trainer
-    if (day.nutritionPlan.trainer && day.nutritionPlan.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to delete this nutrition day`);
+    if (
+      day.nutritionPlan.trainer &&
+      day.nutritionPlan.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to delete this nutrition day`,
+      );
     }
 
     await this.nutritionDayRepository.delete(dayId);

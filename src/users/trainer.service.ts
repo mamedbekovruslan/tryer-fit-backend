@@ -1,6 +1,10 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, IsNull } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Trainer } from './trainer.entity';
 import { Client } from './client.entity';
 import * as bcrypt from 'bcrypt';
@@ -42,7 +46,9 @@ export class TrainerService {
   async create(trainerData: CreateTrainerDto): Promise<Trainer> {
     // Basic validation
     if (!trainerData.email || !trainerData.password || !trainerData.username) {
-      throw new BadRequestException('Email, password, and username are required');
+      throw new BadRequestException(
+        'Email, password, and username are required',
+      );
     }
 
     // Validate email format
@@ -53,7 +59,9 @@ export class TrainerService {
 
     // Validate password strength (at least 6 characters)
     if (trainerData.password.length < 6) {
-      throw new BadRequestException('Password must be at least 6 characters long');
+      throw new BadRequestException(
+        'Password must be at least 6 characters long',
+      );
     }
 
     // Hash the password before saving
@@ -96,15 +104,23 @@ export class TrainerService {
   async getClientsByTrainerId(trainerId: number): Promise<Client[]> {
     return await this.clientRepository.find({
       where: { trainer: { id: trainerId } },
-      relations: ['trainer']
+      relations: ['trainer'],
     });
   }
 
   // Привязать клиента к тренеру
-  async assignClientToTrainer(clientId: number, trainerId: number): Promise<Client> {
+  async assignClientToTrainer(
+    clientId: number,
+    trainerId: number,
+  ): Promise<Client> {
     // Находим клиента и тренера
-    const client = await this.clientRepository.findOne({ where: { id: clientId }, relations: ['trainer'] });
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const client = await this.clientRepository.findOne({
+      where: { id: clientId },
+      relations: ['trainer'],
+    });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
 
     if (!client) {
       throw new NotFoundException(`Client with ID ${clientId} not found`);
@@ -119,9 +135,14 @@ export class TrainerService {
     const updatedClient = await this.clientRepository.save(client);
 
     // Возвращаем обновленного клиента с полной информацией о тренере
-    const result = await this.clientRepository.findOne({ where: { id: updatedClient.id }, relations: ['trainer'] });
+    const result = await this.clientRepository.findOne({
+      where: { id: updatedClient.id },
+      relations: ['trainer'],
+    });
     if (!result) {
-      throw new NotFoundException(`Updated client with ID ${updatedClient.id} not found`);
+      throw new NotFoundException(
+        `Updated client with ID ${updatedClient.id} not found`,
+      );
     }
     return result;
   }
@@ -137,15 +158,23 @@ export class TrainerService {
       .execute();
 
     // Возвращаем обновленного клиента
-    const result = await this.clientRepository.findOne({ where: { id: clientId }, relations: ['trainer'] });
+    const result = await this.clientRepository.findOne({
+      where: { id: clientId },
+      relations: ['trainer'],
+    });
     if (!result) {
-      throw new NotFoundException(`Client with ID ${clientId} not found after unassignment`);
+      throw new NotFoundException(
+        `Client with ID ${clientId} not found after unassignment`,
+      );
     }
     return result;
   }
 
   // Обновить информацию о тренере
-  async updateTrainer(id: number, updateData: Partial<CreateTrainerDto>): Promise<Trainer> {
+  async updateTrainer(
+    id: number,
+    updateData: Partial<CreateTrainerDto>,
+  ): Promise<Trainer> {
     const trainer = await this.trainerRepository.findOne({ where: { id } });
 
     if (!trainer) {
@@ -158,7 +187,10 @@ export class TrainerService {
     // Если предоставлен новый пароль, хешируем его
     if (updateData.password) {
       const saltRounds = 10;
-      trainer.password_hash = await bcrypt.hash(updateData.password, saltRounds);
+      trainer.password_hash = await bcrypt.hash(
+        updateData.password,
+        saltRounds,
+      );
     }
 
     return await this.trainerRepository.save(trainer);

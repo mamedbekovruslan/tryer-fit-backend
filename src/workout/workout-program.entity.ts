@@ -31,7 +31,9 @@ export class WorkoutProgram {
   @JoinColumn({ name: 'trainer_id' })
   trainer?: Trainer;
 
-  @OneToMany(() => WorkoutDay, (workoutDay) => workoutDay.workoutProgram, { cascade: true })
+  @OneToMany(() => WorkoutDay, (workoutDay) => workoutDay.workoutProgram, {
+    cascade: true,
+  })
   workoutDays: WorkoutDay[];
 
   @CreateDateColumn({ name: 'created_at' })

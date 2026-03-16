@@ -20,7 +20,9 @@ export class Meal {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @ManyToOne(() => NutritionDay, (nutritionDay) => nutritionDay.meals, { nullable: false })
+  @ManyToOne(() => NutritionDay, (nutritionDay) => nutritionDay.meals, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'nutrition_day_id' })
   nutritionDay: NutritionDay;
 

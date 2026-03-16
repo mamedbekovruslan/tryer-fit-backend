@@ -1,3 +1,5 @@
+import type { TrainerResponse } from '../users/user-response';
+
 export interface LoginDto {
   email: string;
   password: string;
@@ -10,6 +12,6 @@ export interface AuthResponse {
     email: string;
     username: string;
     user_type: 'client' | 'trainer';
-    trainer?: any; // Информация о тренере для клиентов
+    trainer?: TrainerResponse;
   };
 }

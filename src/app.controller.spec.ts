@@ -20,7 +20,9 @@ describe('AppController', () => {
         status: 'OK',
         timestamp: new Date(),
       };
-      jest.spyOn(global.Date, 'now').mockImplementation(() => result.timestamp.getTime());
+      jest
+        .spyOn(global.Date, 'now')
+        .mockImplementation(() => result.timestamp.getTime());
       expect(appController.getHealth()).toEqual(result);
     });
   });

@@ -13,11 +13,45 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
+import type { JwtPayload, UserType } from '../auth/auth.types';
 
-interface JwtPayload {
-  email: string;
-  sub: number;
-  user_type: 'client' | 'trainer';
+interface SocketAuthData {
+  userId?: number;
+  userType?: UserType;
+}
+
+function getSocketAuthData(client: Socket): SocketAuthData {
+  return client.data as SocketAuthData;
+}
+
+function extractTokenFromHandshake(client: Socket): string | null {
+  const auth = client.handshake.auth as Record<string, unknown>;
+  const authToken = auth.token;
+  if (typeof authToken === 'string' && authToken.length > 0) {
+    return authToken;
+  }
+
+  const queryToken = client.handshake.query.token;
+  if (typeof queryToken === 'string' && queryToken.length > 0) {
+    return queryToken;
+  }
+
+  return extractTokenFromCookieHeader(client.handshake.headers.cookie);
+}
+
+function extractTokenFromCookieHeader(cookieHeader?: string): string | null {
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const tokenCookie = cookieHeader
+    .split(';')
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith('token='));
+
+  return tokenCookie
+    ? decodeURIComponent(tokenCookie.slice('token='.length))
+    : null;
 }
 
 @WebSocketGateway({
@@ -31,23 +65,23 @@ export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()
-  server: Server;
+  private server: Server;
 
-  private logger: Logger = new Logger('ChatGateway');
-  private connectedClients: Map<number, string> = new Map(); // userId -> socketId
+  private readonly logger: Logger = new Logger('ChatGateway');
+  private readonly connectedClients: Map<number, string> = new Map();
 
   constructor(
     private jwtService: JwtService,
     private chatService: ChatService,
   ) {}
 
-  afterInit(server: Server) {
+  afterInit() {
     this.logger.log('Chat Gateway initialized');
   }
 
-  async handleConnection(client: Socket) {
+  handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth.token || client.handshake.query.token;
+      const token = extractTokenFromHandshake(client);
 
       if (!token) {
         this.logger.warn('Connection attempt without token');
@@ -57,26 +91,31 @@ export class ChatGateway
 
       const payload = this.jwtService.verify<JwtPayload>(token);
       const userId = payload.sub;
-      const userType = payload.user_type;
+      const userType: UserType = payload.user_type;
+      const socketData = getSocketAuthData(client);
 
-      client.data.userId = userId;
-      client.data.userType = userType;
+      socketData.userId = userId;
+      socketData.userType = userType;
 
       // Сохраняем подключение
       this.connectedClients.set(userId, client.id);
 
-      this.logger.log(`Client connected: ${userId} (${userType}) - Socket: ${client.id}`);
+      this.logger.log(
+        `Client connected: ${userId} (${userType}) - Socket: ${client.id}`,
+      );
 
       // Отправляем подтверждение подключения
       client.emit('connected', { userId, userType });
-    } catch (error: any) {
-      this.logger.error(`Connection error: ${error.message}`);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown connection error';
+      this.logger.error(`Connection error: ${message}`);
       client.disconnect();
     }
   }
 
-  async handleDisconnect(client: Socket) {
-    const userId = client.data.userId;
+  handleDisconnect(client: Socket) {
+    const userId = getSocketAuthData(client).userId;
     if (userId) {
       this.connectedClients.delete(userId);
       this.logger.log(`Client disconnected: ${userId}`);
@@ -89,8 +128,7 @@ export class ChatGateway
     @MessageBody() data: SendMessageDto,
   ) {
     try {
-      const senderId = client.data.userId;
-      const senderType = client.data.userType;
+      const senderId = getSocketAuthData(client).userId;
 
       if (!senderId) {
         throw new UnauthorizedException('User not authenticated');
@@ -129,9 +167,11 @@ export class ChatGateway
       this.logger.log(`Message sent from ${senderId} to ${data.receiverId}`);
 
       return message;
-    } catch (error: any) {
-      this.logger.error(`Send message error: ${error.message}`);
-      client.emit('error', { message: error.message });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown send message error';
+      this.logger.error(`Send message error: ${message}`);
+      client.emit('error', { message });
       throw error;
     }
   }
@@ -142,7 +182,7 @@ export class ChatGateway
     @MessageBody() data: { senderId: number },
   ) {
     try {
-      const userId = client.data.userId;
+      const userId = getSocketAuthData(client).userId;
 
       if (!userId) {
         throw new UnauthorizedException('User not authenticated');
@@ -159,10 +199,14 @@ export class ChatGateway
         });
       }
 
-      this.logger.log(`Messages marked as read by ${userId} from ${data.senderId}`);
-    } catch (error: any) {
-      this.logger.error(`Mark as read error: ${error.message}`);
-      client.emit('error', { message: error.message });
+      this.logger.log(
+        `Messages marked as read by ${userId} from ${data.senderId}`,
+      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown mark as read error';
+      this.logger.error(`Mark as read error: ${message}`);
+      client.emit('error', { message });
       throw error;
     }
   }
@@ -170,13 +214,13 @@ export class ChatGateway
   @SubscribeMessage('typing')
   handleTyping(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { receiverId: number, isTyping: boolean },
+    @MessageBody() data: { receiverId: number; isTyping: boolean },
   ) {
-    const senderId = client.data.userId;
-    const senderType = client.data.userType;
+    const { userId: senderId, userType: senderType } =
+      getSocketAuthData(client);
 
     const receiverSocketId = this.connectedClients.get(data.receiverId);
-    if (receiverSocketId) {
+    if (receiverSocketId && senderId && senderType) {
       this.server.to(receiverSocketId).emit('userTyping', {
         senderId,
         senderType,

@@ -10,11 +10,13 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   app.enableCors({
     origin: [
@@ -31,4 +33,4 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3001);
 }
 
-bootstrap();
+void bootstrap();

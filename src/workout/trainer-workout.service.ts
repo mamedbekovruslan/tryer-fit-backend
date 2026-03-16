@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WorkoutCategory } from './workout-category.entity';
@@ -39,7 +43,10 @@ export class TrainerWorkoutService {
   ) {}
 
   // Workout Categories
-  async getTrainerWorkoutCategories(trainerId: number): Promise<WorkoutCategory[]> {
+  async getTrainerWorkoutCategories(
+    trainerId: number,
+  ): Promise<WorkoutCategory[]> {
+    void trainerId;
     return await this.workoutCategoryRepository.find({
       order: { name: 'ASC' },
     });
@@ -49,7 +56,9 @@ export class TrainerWorkoutService {
     trainerId: number,
     createCategoryDto: CreateWorkoutCategoryDto,
   ): Promise<WorkoutCategory> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -66,29 +75,45 @@ export class TrainerWorkoutService {
     categoryId: number,
     updateCategoryDto: UpdateWorkoutCategoryDto,
   ): Promise<WorkoutCategory> {
-    const category = await this.workoutCategoryRepository.findOne({ where: { id: categoryId } });
+    const category = await this.workoutCategoryRepository.findOne({
+      where: { id: categoryId },
+    });
     if (!category) {
-      throw new NotFoundException(`Workout category with ID ${categoryId} not found`);
+      throw new NotFoundException(
+        `Workout category with ID ${categoryId} not found`,
+      );
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     category.name = updateCategoryDto.name ?? category.name;
-    category.description = updateCategoryDto.description ?? category.description;
+    category.description =
+      updateCategoryDto.description ?? category.description;
 
     return await this.workoutCategoryRepository.save(category);
   }
 
-  async deleteWorkoutCategory(trainerId: number, categoryId: number): Promise<void> {
-    const category = await this.workoutCategoryRepository.findOne({ where: { id: categoryId } });
+  async deleteWorkoutCategory(
+    trainerId: number,
+    categoryId: number,
+  ): Promise<void> {
+    const category = await this.workoutCategoryRepository.findOne({
+      where: { id: categoryId },
+    });
     if (!category) {
-      throw new NotFoundException(`Workout category with ID ${categoryId} not found`);
+      throw new NotFoundException(
+        `Workout category with ID ${categoryId} not found`,
+      );
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -108,7 +133,9 @@ export class TrainerWorkoutService {
 
   // Workout Programs
   async getAllWorkoutPrograms(trainerId: number): Promise<WorkoutProgram[]> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -124,20 +151,26 @@ export class TrainerWorkoutService {
     trainerId: number,
     categoryId: number,
   ): Promise<WorkoutProgram[]> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
-    const category = await this.workoutCategoryRepository.findOne({ where: { id: categoryId } });
+    const category = await this.workoutCategoryRepository.findOne({
+      where: { id: categoryId },
+    });
     if (!category) {
-      throw new NotFoundException(`Workout category with ID ${categoryId} not found`);
+      throw new NotFoundException(
+        `Workout category with ID ${categoryId} not found`,
+      );
     }
 
     return await this.workoutProgramRepository.find({
       where: {
         workoutCategory: { id: categoryId },
-        trainer: { id: trainerId }
+        trainer: { id: trainerId },
       },
       relations: ['workoutCategory', 'trainer'],
       order: { name: 'ASC' },
@@ -148,7 +181,9 @@ export class TrainerWorkoutService {
     trainerId: number,
     createProgramDto: CreateWorkoutProgramDto,
   ): Promise<WorkoutProgram> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -157,7 +192,9 @@ export class TrainerWorkoutService {
       where: { id: createProgramDto.workoutCategoryId },
     });
     if (!category) {
-      throw new NotFoundException(`Workout category with ID ${createProgramDto.workoutCategoryId} not found`);
+      throw new NotFoundException(
+        `Workout category with ID ${createProgramDto.workoutCategoryId} not found`,
+      );
     }
 
     const program = new WorkoutProgram();
@@ -179,16 +216,22 @@ export class TrainerWorkoutService {
       relations: ['workoutCategory', 'trainer'],
     });
     if (!program) {
-      throw new NotFoundException(`Workout program with ID ${programId} not found`);
+      throw new NotFoundException(
+        `Workout program with ID ${programId} not found`,
+      );
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     if (program.trainer && program.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to update this workout program`);
+      throw new ForbiddenException(
+        `You don't have permission to update this workout program`,
+      );
     }
 
     if (updateProgramDto.workoutCategoryId) {
@@ -196,7 +239,9 @@ export class TrainerWorkoutService {
         where: { id: updateProgramDto.workoutCategoryId },
       });
       if (!category) {
-        throw new NotFoundException(`Workout category with ID ${updateProgramDto.workoutCategoryId} not found`);
+        throw new NotFoundException(
+          `Workout category with ID ${updateProgramDto.workoutCategoryId} not found`,
+        );
       }
       program.workoutCategory = category;
     }
@@ -207,8 +252,13 @@ export class TrainerWorkoutService {
     return await this.workoutProgramRepository.save(program);
   }
 
-  async getWorkoutProgramById(trainerId: number, programId: number): Promise<WorkoutProgram> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+  async getWorkoutProgramById(
+    trainerId: number,
+    programId: number,
+  ): Promise<WorkoutProgram> {
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -218,28 +268,39 @@ export class TrainerWorkoutService {
       relations: ['workoutCategory', 'trainer'],
     });
     if (!program) {
-      throw new NotFoundException(`Workout program with ID ${programId} not found`);
+      throw new NotFoundException(
+        `Workout program with ID ${programId} not found`,
+      );
     }
 
     return program;
   }
 
-  async deleteWorkoutProgram(trainerId: number, programId: number): Promise<void> {
+  async deleteWorkoutProgram(
+    trainerId: number,
+    programId: number,
+  ): Promise<void> {
     const program = await this.workoutProgramRepository.findOne({
       where: { id: programId },
       relations: ['workoutCategory', 'trainer'],
     });
     if (!program) {
-      throw new NotFoundException(`Workout program with ID ${programId} not found`);
+      throw new NotFoundException(
+        `Workout program with ID ${programId} not found`,
+      );
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
     if (program.trainer && program.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to delete this workout program`);
+      throw new ForbiddenException(
+        `You don't have permission to delete this workout program`,
+      );
     }
 
     const daysCount = await this.workoutDayRepository.count({
@@ -260,7 +321,9 @@ export class TrainerWorkoutService {
     trainerId: number,
     programId: number,
   ): Promise<WorkoutDay[]> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -270,11 +333,15 @@ export class TrainerWorkoutService {
       relations: ['workoutCategory', 'trainer'],
     });
     if (!program) {
-      throw new NotFoundException(`Workout program with ID ${programId} not found`);
+      throw new NotFoundException(
+        `Workout program with ID ${programId} not found`,
+      );
     }
 
     if (program.trainer && program.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to access this workout program`);
+      throw new ForbiddenException(
+        `You don't have permission to access this workout program`,
+      );
     }
 
     return await this.workoutDayRepository.find({
@@ -288,7 +355,9 @@ export class TrainerWorkoutService {
     trainerId: number,
     createDayDto: CreateWorkoutDayDto,
   ): Promise<WorkoutDay> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -298,11 +367,15 @@ export class TrainerWorkoutService {
       relations: ['workoutCategory', 'trainer'],
     });
     if (!program) {
-      throw new NotFoundException(`Workout program with ID ${createDayDto.workoutProgramId} not found`);
+      throw new NotFoundException(
+        `Workout program with ID ${createDayDto.workoutProgramId} not found`,
+      );
     }
 
     if (program.trainer && program.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to add days to this workout program`);
+      throw new ForbiddenException(
+        `You don't have permission to add days to this workout program`,
+      );
     }
 
     const day = new WorkoutDay();
@@ -327,13 +400,20 @@ export class TrainerWorkoutService {
       throw new NotFoundException(`Workout day with ID ${dayId} not found`);
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
-    if (day.workoutProgram.trainer && day.workoutProgram.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to update this workout day`);
+    if (
+      day.workoutProgram.trainer &&
+      day.workoutProgram.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to update this workout day`,
+      );
     }
 
     if (updateDayDto.workoutProgramId) {
@@ -342,11 +422,15 @@ export class TrainerWorkoutService {
         relations: ['workoutCategory', 'trainer'],
       });
       if (!program) {
-        throw new NotFoundException(`Workout program with ID ${updateDayDto.workoutProgramId} not found`);
+        throw new NotFoundException(
+          `Workout program with ID ${updateDayDto.workoutProgramId} not found`,
+        );
       }
 
       if (program.trainer && program.trainer.id !== trainerId) {
-        throw new ForbiddenException(`You don't have permission to use this workout program`);
+        throw new ForbiddenException(
+          `You don't have permission to use this workout program`,
+        );
       }
       day.workoutProgram = program;
     }
@@ -367,13 +451,20 @@ export class TrainerWorkoutService {
       throw new NotFoundException(`Workout day with ID ${dayId} not found`);
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
-    if (day.workoutProgram.trainer && day.workoutProgram.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to delete this workout day`);
+    if (
+      day.workoutProgram.trainer &&
+      day.workoutProgram.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to delete this workout day`,
+      );
     }
 
     await this.workoutDayRepository.delete(dayId);
@@ -384,7 +475,9 @@ export class TrainerWorkoutService {
     trainerId: number,
     dayId: number,
   ): Promise<Exercise[]> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -397,8 +490,13 @@ export class TrainerWorkoutService {
       throw new NotFoundException(`Workout day with ID ${dayId} not found`);
     }
 
-    if (day.workoutProgram.trainer && day.workoutProgram.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to access these exercises`);
+    if (
+      day.workoutProgram.trainer &&
+      day.workoutProgram.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to access these exercises`,
+      );
     }
 
     return await this.exerciseRepository.find({
@@ -412,7 +510,9 @@ export class TrainerWorkoutService {
     trainerId: number,
     createExerciseDto: CreateExerciseDto,
   ): Promise<Exercise> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -422,11 +522,18 @@ export class TrainerWorkoutService {
       relations: ['workoutProgram'],
     });
     if (!day) {
-      throw new NotFoundException(`Workout day with ID ${createExerciseDto.workoutDayId} not found`);
+      throw new NotFoundException(
+        `Workout day with ID ${createExerciseDto.workoutDayId} not found`,
+      );
     }
 
-    if (day.workoutProgram.trainer && day.workoutProgram.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to add exercises to this workout day`);
+    if (
+      day.workoutProgram.trainer &&
+      day.workoutProgram.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to add exercises to this workout day`,
+      );
     }
 
     const exercise = new Exercise();
@@ -455,14 +562,20 @@ export class TrainerWorkoutService {
       throw new NotFoundException(`Exercise with ID ${exerciseId} not found`);
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
-    if (exercise.workoutDay.workoutProgram.trainer && 
-        exercise.workoutDay.workoutProgram.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to update this exercise`);
+    if (
+      exercise.workoutDay.workoutProgram.trainer &&
+      exercise.workoutDay.workoutProgram.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to update this exercise`,
+      );
     }
 
     if (updateExerciseDto.workoutDayId) {
@@ -471,22 +584,31 @@ export class TrainerWorkoutService {
         relations: ['workoutProgram'],
       });
       if (!day) {
-        throw new NotFoundException(`Workout day with ID ${updateExerciseDto.workoutDayId} not found`);
+        throw new NotFoundException(
+          `Workout day with ID ${updateExerciseDto.workoutDayId} not found`,
+        );
       }
 
-      if (day.workoutProgram.trainer && day.workoutProgram.trainer.id !== trainerId) {
-        throw new ForbiddenException(`You don't have permission to use this workout day`);
+      if (
+        day.workoutProgram.trainer &&
+        day.workoutProgram.trainer.id !== trainerId
+      ) {
+        throw new ForbiddenException(
+          `You don't have permission to use this workout day`,
+        );
       }
       exercise.workoutDay = day;
     }
 
     exercise.name = updateExerciseDto.name ?? exercise.name;
-    exercise.description = updateExerciseDto.description ?? exercise.description;
+    exercise.description =
+      updateExerciseDto.description ?? exercise.description;
     exercise.sets = updateExerciseDto.sets ?? exercise.sets;
     exercise.reps = updateExerciseDto.reps ?? exercise.reps;
     exercise.weight = updateExerciseDto.weight ?? exercise.weight;
     exercise.restTime = updateExerciseDto.restTime ?? exercise.restTime;
-    exercise.exerciseOrder = updateExerciseDto.exerciseOrder ?? exercise.exerciseOrder;
+    exercise.exerciseOrder =
+      updateExerciseDto.exerciseOrder ?? exercise.exerciseOrder;
 
     return await this.exerciseRepository.save(exercise);
   }
@@ -500,14 +622,20 @@ export class TrainerWorkoutService {
       throw new NotFoundException(`Exercise with ID ${exerciseId} not found`);
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
-    if (exercise.workoutDay.workoutProgram.trainer && 
-        exercise.workoutDay.workoutProgram.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to delete this exercise`);
+    if (
+      exercise.workoutDay.workoutProgram.trainer &&
+      exercise.workoutDay.workoutProgram.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to delete this exercise`,
+      );
     }
 
     await this.exerciseRepository.delete(exerciseId);
@@ -518,19 +646,27 @@ export class TrainerWorkoutService {
     trainerId: number,
     createDto: CreateClientWorkoutProgramDto,
   ): Promise<ClientWorkoutProgram> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
-    const client = await this.clientRepository.findOne({ where: { id: createDto.clientId } });
+    const client = await this.clientRepository.findOne({
+      where: { id: createDto.clientId },
+    });
     if (!client) {
-      throw new NotFoundException(`Client with ID ${createDto.clientId} not found`);
+      throw new NotFoundException(
+        `Client with ID ${createDto.clientId} not found`,
+      );
     }
 
     // Verify client belongs to this trainer
     if (client.trainer && client.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to assign programs to this client`);
+      throw new ForbiddenException(
+        `You don't have permission to assign programs to this client`,
+      );
     }
 
     const program = await this.workoutProgramRepository.findOne({
@@ -538,12 +674,16 @@ export class TrainerWorkoutService {
       relations: ['trainer'],
     });
     if (!program) {
-      throw new NotFoundException(`Workout program with ID ${createDto.workoutProgramId} not found`);
+      throw new NotFoundException(
+        `Workout program with ID ${createDto.workoutProgramId} not found`,
+      );
     }
 
     // Verify program belongs to this trainer
     if (program.trainer && program.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to assign this program`);
+      throw new ForbiddenException(
+        `You don't have permission to assign this program`,
+      );
     }
 
     const clientProgram = new ClientWorkoutProgram();
@@ -554,18 +694,25 @@ export class TrainerWorkoutService {
     return await this.clientWorkoutProgramRepository.save(clientProgram);
   }
 
-  async getActiveClientWorkoutPrograms(clientId: number): Promise<ClientWorkoutProgram[]> {
+  async getActiveClientWorkoutPrograms(
+    clientId: number,
+  ): Promise<ClientWorkoutProgram[]> {
     return await this.clientWorkoutProgramRepository.find({
-      where: { 
+      where: {
         client: { id: clientId },
-        isActive: true 
+        isActive: true,
       },
       relations: ['client', 'workoutProgram'],
     });
   }
 
-  async getClientWorkoutPrograms(trainerId: number, clientId: number): Promise<ClientWorkoutProgram[]> {
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+  async getClientWorkoutPrograms(
+    trainerId: number,
+    clientId: number,
+  ): Promise<ClientWorkoutProgram[]> {
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
@@ -586,16 +733,25 @@ export class TrainerWorkoutService {
       relations: ['client', 'workoutProgram'],
     });
     if (!clientProgram) {
-      throw new NotFoundException(`Client workout program with ID ${id} not found`);
+      throw new NotFoundException(
+        `Client workout program with ID ${id} not found`,
+      );
     }
 
-    const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
+    const trainer = await this.trainerRepository.findOne({
+      where: { id: trainerId },
+    });
     if (!trainer) {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
-    if (clientProgram.client.trainer && clientProgram.client.trainer.id !== trainerId) {
-      throw new ForbiddenException(`You don't have permission to update this client program`);
+    if (
+      clientProgram.client.trainer &&
+      clientProgram.client.trainer.id !== trainerId
+    ) {
+      throw new ForbiddenException(
+        `You don't have permission to update this client program`,
+      );
     }
 
     clientProgram.isActive = updateDto.isActive ?? clientProgram.isActive;

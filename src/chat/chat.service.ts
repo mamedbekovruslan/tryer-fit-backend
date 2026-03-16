@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatMessage, SenderType } from './chat-message.entity';
@@ -38,7 +42,9 @@ export class ChatService {
       }
 
       if (!client.trainer || client.trainer.id !== receiverId) {
-        throw new ForbiddenException('Вы можете писать только своему закреплённому тренеру');
+        throw new ForbiddenException(
+          'Вы можете писать только своему закреплённому тренеру',
+        );
       }
     }
 
@@ -101,9 +107,10 @@ export class ChatService {
   /**
    * Получить все чаты пользователя с последними сообщениями
    */
-  async getUserChats(userId: number, userType: 'client' | 'trainer'): Promise<any[]> {
-    console.log(`getUserChats called: userId=${userId}, userType=${userType}`);
-    
+  async getUserChats(
+    userId: number,
+    userType: 'client' | 'trainer',
+  ): Promise<any[]> {
     if (userType === 'client') {
       // Клиент имеет только один чат - со своим тренером
       const client = await this.clientRepository.findOne({
@@ -112,7 +119,6 @@ export class ChatService {
       });
 
       if (!client || !client.trainer) {
-        console.log(`Client ${userId} has no trainer`);
         return [];
       }
 
@@ -134,21 +140,23 @@ export class ChatService {
         },
       });
 
-      return [{
-        userId: client.trainer.id,
-        username: `${client.trainer.first_name || ''} ${client.trainer.last_name || ''}`.trim() || client.trainer.username,
-        photo_urls: client.trainer.photo_urls,
-        lastMessage,
-        unreadCount,
-      }];
+      return [
+        {
+          userId: client.trainer.id,
+          username:
+            `${client.trainer.first_name || ''} ${client.trainer.last_name || ''}`.trim() ||
+            client.trainer.username,
+          photo_urls: client.trainer.photo_urls,
+          lastMessage,
+          unreadCount,
+        },
+      ];
     } else {
       // Тренер имеет чаты со всеми своими клиентами
       const clients = await this.clientRepository.find({
         where: { trainer: { id: userId } },
         relations: ['trainer'],
       });
-      
-      console.log(`Trainer ${userId} has ${clients.length} clients`);
 
       const chats: any[] = [];
       for (const client of clients) {
@@ -172,7 +180,9 @@ export class ChatService {
 
         chats.push({
           userId: client.id,
-          username: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.username,
+          username:
+            `${client.first_name || ''} ${client.last_name || ''}`.trim() ||
+            client.username,
           email: client.email,
           photo_urls: client.photo_urls,
           lastMessage,
@@ -187,10 +197,7 @@ export class ChatService {
   /**
    * Отметить сообщения как прочитанные
    */
-  async markMessagesAsRead(
-    userId: number,
-    senderId: number,
-  ): Promise<void> {
+  async markMessagesAsRead(userId: number, senderId: number): Promise<void> {
     await this.chatMessageRepository.update(
       {
         senderId,

@@ -7,143 +7,185 @@ import {
   Delete,
   Put,
   UseGuards,
-  NotFoundException,
   Req,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TrainerNutritionService } from './trainer-nutrition.service';
-import { NutritionCategory } from '../nutrition/nutrition-category.entity';
-import { NutritionPlan } from '../nutrition/nutrition-plan.entity';
-import { NutritionDay } from '../nutrition/nutrition-day.entity';
 import { CreateNutritionCategoryDto } from '../nutrition/dto/create-nutrition-category.dto';
 import { UpdateNutritionCategoryDto } from '../nutrition/dto/update-nutrition-category.dto';
 import { CreateNutritionPlanDto } from '../nutrition/dto/create-nutrition-plan.dto';
 import { UpdateNutritionPlanDto } from '../nutrition/dto/update-nutrition-plan.dto';
 import { CreateNutritionDayDto } from '../nutrition/dto/create-nutrition-day.dto';
 import { UpdateNutritionDayDto } from '../nutrition/dto/update-nutrition-day.dto';
+import {
+  NutritionCategoryResponse,
+  NutritionDayResponse,
+  NutritionPlanResponse,
+  toNutritionCategoryResponse,
+  toNutritionDayResponse,
+  toNutritionPlanResponse,
+} from './nutrition-response';
+import type { AuthenticatedRequest } from '../auth/auth.types';
 
 @Controller('trainer/nutrition')
 @UseGuards(JwtAuthGuard)
 export class TrainerNutritionController {
-  constructor(private readonly trainerNutritionService: TrainerNutritionService) {}
+  constructor(
+    private readonly trainerNutritionService: TrainerNutritionService,
+  ) {}
 
   // Nutrition Categories
   @Get('categories')
-  async getTrainerNutritionCategories(@Req() req): Promise<NutritionCategory[]> {
+  async getTrainerNutritionCategories(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<NutritionCategoryResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.getTrainerNutritionCategories(trainerId);
+    const categories =
+      await this.trainerNutritionService.getTrainerNutritionCategories(
+        trainerId,
+      );
+    return categories.map(toNutritionCategoryResponse);
   }
 
   @Post('categories')
   async createNutritionCategory(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() createCategoryDto: CreateNutritionCategoryDto,
-  ): Promise<NutritionCategory> {
+  ): Promise<NutritionCategoryResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.createNutritionCategory(trainerId, createCategoryDto);
+    const category = await this.trainerNutritionService.createNutritionCategory(
+      trainerId,
+      createCategoryDto,
+    );
+    return toNutritionCategoryResponse(category);
   }
 
   @Put('categories/:id')
   async updateNutritionCategory(
-    @Req() req,
-    @Param('id') id: number,
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateCategoryDto: UpdateNutritionCategoryDto,
-  ): Promise<NutritionCategory> {
+  ): Promise<NutritionCategoryResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.updateNutritionCategory(
+    const category = await this.trainerNutritionService.updateNutritionCategory(
       trainerId,
-      parseInt(id.toString()),
+      id,
       updateCategoryDto,
     );
+    return toNutritionCategoryResponse(category);
   }
 
   @Delete('categories/:id')
-  async deleteNutritionCategory(@Req() req, @Param('id') id: number): Promise<void> {
+  async deleteNutritionCategory(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.deleteNutritionCategory(trainerId, parseInt(id.toString()));
+    await this.trainerNutritionService.deleteNutritionCategory(trainerId, id);
   }
 
   // Nutrition Plans
   @Get('categories/:categoryId/plans')
   async getNutritionPlansByCategory(
-    @Req() req,
-    @Param('categoryId') categoryId: number,
-  ): Promise<NutritionPlan[]> {
+    @Req() req: AuthenticatedRequest,
+    @Param('categoryId', ParseIntPipe) categoryId: number,
+  ): Promise<NutritionPlanResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.getNutritionPlansByCategoryAndTrainer(
-      trainerId,
-      parseInt(categoryId.toString()),
-    );
+    const plans =
+      await this.trainerNutritionService.getNutritionPlansByCategoryAndTrainer(
+        trainerId,
+        categoryId,
+      );
+    return plans.map(toNutritionPlanResponse);
   }
 
   @Post('plans')
   async createNutritionPlan(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() createPlanDto: CreateNutritionPlanDto,
-  ): Promise<NutritionPlan> {
+  ): Promise<NutritionPlanResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.createNutritionPlan(trainerId, createPlanDto);
+    const plan = await this.trainerNutritionService.createNutritionPlan(
+      trainerId,
+      createPlanDto,
+    );
+    return toNutritionPlanResponse(plan);
   }
 
   @Put('plans/:id')
   async updateNutritionPlan(
-    @Req() req,
-    @Param('id') id: number,
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updatePlanDto: UpdateNutritionPlanDto,
-  ): Promise<NutritionPlan> {
+  ): Promise<NutritionPlanResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.updateNutritionPlan(
+    const plan = await this.trainerNutritionService.updateNutritionPlan(
       trainerId,
-      parseInt(id.toString()),
+      id,
       updatePlanDto,
     );
+    return toNutritionPlanResponse(plan);
   }
 
   @Delete('plans/:id')
-  async deleteNutritionPlan(@Req() req, @Param('id') id: number): Promise<void> {
+  async deleteNutritionPlan(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.deleteNutritionPlan(trainerId, parseInt(id.toString()));
+    await this.trainerNutritionService.deleteNutritionPlan(trainerId, id);
   }
 
   // Nutrition Days
   @Get('plans/:planId/days')
   async getNutritionDaysByPlan(
-    @Req() req,
-    @Param('planId') planId: number,
-  ): Promise<NutritionDay[]> {
+    @Req() req: AuthenticatedRequest,
+    @Param('planId', ParseIntPipe) planId: number,
+  ): Promise<NutritionDayResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.getNutritionDaysByPlanAndTrainer(
-      trainerId,
-      parseInt(planId.toString()),
-    );
+    const days =
+      await this.trainerNutritionService.getNutritionDaysByPlanAndTrainer(
+        trainerId,
+        planId,
+      );
+    return days.map(toNutritionDayResponse);
   }
 
   @Post('days')
   async createNutritionDay(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() createDayDto: CreateNutritionDayDto,
-  ): Promise<NutritionDay> {
+  ): Promise<NutritionDayResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.createNutritionDay(trainerId, createDayDto);
+    const day = await this.trainerNutritionService.createNutritionDay(
+      trainerId,
+      createDayDto,
+    );
+    return toNutritionDayResponse(day);
   }
 
   @Put('days/:id')
   async updateNutritionDay(
-    @Req() req,
-    @Param('id') id: number,
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateDayDto: UpdateNutritionDayDto,
-  ): Promise<NutritionDay> {
+  ): Promise<NutritionDayResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.updateNutritionDay(
+    const day = await this.trainerNutritionService.updateNutritionDay(
       trainerId,
-      parseInt(id.toString()),
+      id,
       updateDayDto,
     );
+    return toNutritionDayResponse(day);
   }
 
   @Delete('days/:id')
-  async deleteNutritionDay(@Req() req, @Param('id') id: number): Promise<void> {
+  async deleteNutritionDay(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
     const trainerId = req.user.userId;
-    return await this.trainerNutritionService.deleteNutritionDay(trainerId, parseInt(id.toString()));
+    await this.trainerNutritionService.deleteNutritionDay(trainerId, id);
   }
 }

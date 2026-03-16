@@ -7,16 +7,11 @@ import {
   Delete,
   Put,
   UseGuards,
-  NotFoundException,
   Req,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TrainerWorkoutService } from './trainer-workout.service';
-import { WorkoutCategory } from './workout-category.entity';
-import { WorkoutProgram } from './workout-program.entity';
-import { WorkoutDay } from './workout-day.entity';
-import { Exercise } from './exercise.entity';
-import { ClientWorkoutProgram } from './client-workout-program.entity';
 import { CreateWorkoutCategoryDto } from './dto/create-workout-category.dto';
 import { UpdateWorkoutCategoryDto } from './dto/update-workout-category.dto';
 import { CreateWorkoutProgramDto } from './dto/create-workout-program.dto';
@@ -27,6 +22,19 @@ import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { UpdateExerciseDto } from './dto/update-exercise.dto';
 import { CreateClientWorkoutProgramDto } from './dto/create-client-workout-program.dto';
 import { UpdateClientWorkoutProgramDto } from './dto/update-client-workout-program.dto';
+import {
+  ClientWorkoutProgramResponse,
+  ExerciseResponse,
+  WorkoutCategoryResponse,
+  WorkoutDayResponse,
+  WorkoutProgramResponse,
+  toClientWorkoutProgramResponse,
+  toExerciseResponse,
+  toWorkoutCategoryResponse,
+  toWorkoutDayResponse,
+  toWorkoutProgramResponse,
+} from './workout-response';
+import type { AuthenticatedRequest } from '../auth/auth.types';
 
 @Controller('trainer/workout')
 @UseGuards(JwtAuthGuard)
@@ -35,211 +43,271 @@ export class TrainerWorkoutController {
 
   // Workout Categories
   @Get('categories')
-  async getTrainerWorkoutCategories(@Req() req): Promise<WorkoutCategory[]> {
+  async getTrainerWorkoutCategories(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<WorkoutCategoryResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.getTrainerWorkoutCategories(trainerId);
+    const categories =
+      await this.trainerWorkoutService.getTrainerWorkoutCategories(trainerId);
+    return categories.map(toWorkoutCategoryResponse);
   }
 
   @Post('categories')
   async createWorkoutCategory(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() createCategoryDto: CreateWorkoutCategoryDto,
-  ): Promise<WorkoutCategory> {
+  ): Promise<WorkoutCategoryResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.createWorkoutCategory(trainerId, createCategoryDto);
+    const category = await this.trainerWorkoutService.createWorkoutCategory(
+      trainerId,
+      createCategoryDto,
+    );
+    return toWorkoutCategoryResponse(category);
   }
 
   @Put('categories/:id')
   async updateWorkoutCategory(
-    @Req() req,
-    @Param('id') id: number,
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateCategoryDto: UpdateWorkoutCategoryDto,
-  ): Promise<WorkoutCategory> {
+  ): Promise<WorkoutCategoryResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.updateWorkoutCategory(
+    const category = await this.trainerWorkoutService.updateWorkoutCategory(
       trainerId,
-      parseInt(id.toString()),
+      id,
       updateCategoryDto,
     );
+    return toWorkoutCategoryResponse(category);
   }
 
   @Delete('categories/:id')
-  async deleteWorkoutCategory(@Req() req, @Param('id') id: number): Promise<void> {
+  async deleteWorkoutCategory(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.deleteWorkoutCategory(trainerId, parseInt(id.toString()));
+    await this.trainerWorkoutService.deleteWorkoutCategory(trainerId, id);
   }
 
   // Workout Programs
   @Get('programs')
-  async getAllWorkoutPrograms(@Req() req): Promise<WorkoutProgram[]> {
+  async getAllWorkoutPrograms(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<WorkoutProgramResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.getAllWorkoutPrograms(trainerId);
+    const programs =
+      await this.trainerWorkoutService.getAllWorkoutPrograms(trainerId);
+    return programs.map(toWorkoutProgramResponse);
   }
 
   @Get('categories/:categoryId/programs')
   async getWorkoutProgramsByCategory(
-    @Req() req,
-    @Param('categoryId') categoryId: number,
-  ): Promise<WorkoutProgram[]> {
+    @Req() req: AuthenticatedRequest,
+    @Param('categoryId', ParseIntPipe) categoryId: number,
+  ): Promise<WorkoutProgramResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.getWorkoutProgramsByCategoryAndTrainer(
-      trainerId,
-      parseInt(categoryId.toString()),
-    );
+    const programs =
+      await this.trainerWorkoutService.getWorkoutProgramsByCategoryAndTrainer(
+        trainerId,
+        categoryId,
+      );
+    return programs.map(toWorkoutProgramResponse);
   }
 
   @Post('programs')
   async createWorkoutProgram(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() createProgramDto: CreateWorkoutProgramDto,
-  ): Promise<WorkoutProgram> {
+  ): Promise<WorkoutProgramResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.createWorkoutProgram(trainerId, createProgramDto);
+    const program = await this.trainerWorkoutService.createWorkoutProgram(
+      trainerId,
+      createProgramDto,
+    );
+    return toWorkoutProgramResponse(program);
   }
 
   @Put('programs/:id')
   async updateWorkoutProgram(
-    @Req() req,
-    @Param('id') id: number,
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateProgramDto: UpdateWorkoutProgramDto,
-  ): Promise<WorkoutProgram> {
+  ): Promise<WorkoutProgramResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.updateWorkoutProgram(
+    const program = await this.trainerWorkoutService.updateWorkoutProgram(
       trainerId,
-      parseInt(id.toString()),
+      id,
       updateProgramDto,
     );
+    return toWorkoutProgramResponse(program);
   }
 
   @Delete('programs/:id')
-  async deleteWorkoutProgram(@Req() req, @Param('id') id: number): Promise<void> {
+  async deleteWorkoutProgram(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.deleteWorkoutProgram(trainerId, parseInt(id.toString()));
+    await this.trainerWorkoutService.deleteWorkoutProgram(trainerId, id);
   }
 
   @Get('programs/:id')
-  async getWorkoutProgramById(@Req() req, @Param('id') id: number): Promise<WorkoutProgram> {
+  async getWorkoutProgramById(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<WorkoutProgramResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.getWorkoutProgramById(trainerId, parseInt(id.toString()));
+    const program = await this.trainerWorkoutService.getWorkoutProgramById(
+      trainerId,
+      id,
+    );
+    return toWorkoutProgramResponse(program);
   }
 
   // Workout Days
   @Get('programs/:programId/days')
   async getWorkoutDaysByProgram(
-    @Req() req,
-    @Param('programId') programId: number,
-  ): Promise<WorkoutDay[]> {
+    @Req() req: AuthenticatedRequest,
+    @Param('programId', ParseIntPipe) programId: number,
+  ): Promise<WorkoutDayResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.getWorkoutDaysByProgramAndTrainer(
-      trainerId,
-      parseInt(programId.toString()),
-    );
+    const days =
+      await this.trainerWorkoutService.getWorkoutDaysByProgramAndTrainer(
+        trainerId,
+        programId,
+      );
+    return days.map(toWorkoutDayResponse);
   }
 
   @Post('days')
   async createWorkoutDay(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() createDayDto: CreateWorkoutDayDto,
-  ): Promise<WorkoutDay> {
+  ): Promise<WorkoutDayResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.createWorkoutDay(trainerId, createDayDto);
+    const day = await this.trainerWorkoutService.createWorkoutDay(
+      trainerId,
+      createDayDto,
+    );
+    return toWorkoutDayResponse(day);
   }
 
   @Put('days/:id')
   async updateWorkoutDay(
-    @Req() req,
-    @Param('id') id: number,
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateDayDto: UpdateWorkoutDayDto,
-  ): Promise<WorkoutDay> {
+  ): Promise<WorkoutDayResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.updateWorkoutDay(
+    const day = await this.trainerWorkoutService.updateWorkoutDay(
       trainerId,
-      parseInt(id.toString()),
+      id,
       updateDayDto,
     );
+    return toWorkoutDayResponse(day);
   }
 
   @Delete('days/:id')
-  async deleteWorkoutDay(@Req() req, @Param('id') id: number): Promise<void> {
+  async deleteWorkoutDay(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.deleteWorkoutDay(trainerId, parseInt(id.toString()));
+    await this.trainerWorkoutService.deleteWorkoutDay(trainerId, id);
   }
 
   // Exercises
   @Get('days/:dayId/exercises')
   async getExercisesByDay(
-    @Req() req,
-    @Param('dayId') dayId: number,
-  ): Promise<Exercise[]> {
+    @Req() req: AuthenticatedRequest,
+    @Param('dayId', ParseIntPipe) dayId: number,
+  ): Promise<ExerciseResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.getExercisesByDayAndTrainer(
-      trainerId,
-      parseInt(dayId.toString()),
-    );
+    const exercises =
+      await this.trainerWorkoutService.getExercisesByDayAndTrainer(
+        trainerId,
+        dayId,
+      );
+    return exercises.map(toExerciseResponse);
   }
 
   @Post('exercises')
   async createExercise(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() createExerciseDto: CreateExerciseDto,
-  ): Promise<Exercise> {
+  ): Promise<ExerciseResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.createExercise(trainerId, createExerciseDto);
+    const exercise = await this.trainerWorkoutService.createExercise(
+      trainerId,
+      createExerciseDto,
+    );
+    return toExerciseResponse(exercise);
   }
 
   @Put('exercises/:id')
   async updateExercise(
-    @Req() req,
-    @Param('id') id: number,
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateExerciseDto: UpdateExerciseDto,
-  ): Promise<Exercise> {
+  ): Promise<ExerciseResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.updateExercise(
+    const exercise = await this.trainerWorkoutService.updateExercise(
       trainerId,
-      parseInt(id.toString()),
+      id,
       updateExerciseDto,
     );
+    return toExerciseResponse(exercise);
   }
 
   @Delete('exercises/:id')
-  async deleteExercise(@Req() req, @Param('id') id: number): Promise<void> {
+  async deleteExercise(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.deleteExercise(trainerId, parseInt(id.toString()));
+    await this.trainerWorkoutService.deleteExercise(trainerId, id);
   }
 
   // Client Workout Programs
   @Post('client-programs')
   async assignWorkoutProgramToClient(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() createDto: CreateClientWorkoutProgramDto,
-  ): Promise<ClientWorkoutProgram> {
+  ): Promise<ClientWorkoutProgramResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.assignWorkoutProgramToClient(trainerId, createDto);
+    const program =
+      await this.trainerWorkoutService.assignWorkoutProgramToClient(
+        trainerId,
+        createDto,
+      );
+    return toClientWorkoutProgramResponse(program);
   }
 
   @Get('clients/:clientId/programs')
   async getClientWorkoutPrograms(
-    @Req() req,
-    @Param('clientId') clientId: number,
-  ): Promise<ClientWorkoutProgram[]> {
+    @Req() req: AuthenticatedRequest,
+    @Param('clientId', ParseIntPipe) clientId: number,
+  ): Promise<ClientWorkoutProgramResponse[]> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.getClientWorkoutPrograms(
+    const programs = await this.trainerWorkoutService.getClientWorkoutPrograms(
       trainerId,
-      parseInt(clientId.toString()),
+      clientId,
     );
+    return programs.map(toClientWorkoutProgramResponse);
   }
 
   @Put('client-programs/:id')
   async updateClientWorkoutProgram(
-    @Req() req,
-    @Param('id') id: number,
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: UpdateClientWorkoutProgramDto,
-  ): Promise<ClientWorkoutProgram> {
+  ): Promise<ClientWorkoutProgramResponse> {
     const trainerId = req.user.userId;
-    return await this.trainerWorkoutService.updateClientWorkoutProgram(
+    const program = await this.trainerWorkoutService.updateClientWorkoutProgram(
       trainerId,
-      parseInt(id.toString()),
+      id,
       updateDto,
     );
+    return toClientWorkoutProgramResponse(program);
   }
 }

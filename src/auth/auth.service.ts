@@ -6,6 +6,15 @@ import { Client } from '../users/client.entity';
 import { Trainer } from '../users/trainer.entity';
 import * as bcrypt from 'bcrypt';
 import { LoginDto, AuthResponse } from './auth.dto';
+import type { Response } from 'express';
+import type { UserType } from './auth.types';
+import { toTrainerResponse } from '../users/user-response';
+
+type AuthenticatedEntity = Client | Trainer;
+
+type ValidatedUser = Omit<AuthenticatedEntity, 'password_hash'> & {
+  user_type: UserType;
+};
 
 @Injectable()
 export class AuthService {
@@ -17,39 +26,41 @@ export class AuthService {
     private trainerRepository: Repository<Trainer>,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    console.log('Validating user with email:', email); // Логируем email пользователя
-
-    // Try to find client first
-    let user = await this.clientRepository.findOne({ where: { email } });
-    console.log('Found client:', user); // Логируем найденного клиента
-
-    if (user) {
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-      console.log('Password validation result:', isPasswordValid); // Логируем результат проверки пароля
-      if (isPasswordValid) {
-        const { password_hash, ...result } = user;
-        console.log('Returning client result:', { ...result, user_type: 'client' }); // Логируем результат
-        return { ...result, user_type: 'client' };
-      }
+  private async validateEntityPassword<T extends AuthenticatedEntity>(
+    user: T | null,
+    password: string,
+    userType: UserType,
+  ): Promise<ValidatedUser | null> {
+    if (!user) {
+      return null;
     }
 
-    // If not found in clients, try trainers
-    user = await this.trainerRepository.findOne({ where: { email } });
-    console.log('Found trainer:', user); // Логируем найденного тренера
-
-    if (user) {
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-      console.log('Password validation result for trainer:', isPasswordValid); // Логируем результат проверки пароля для тренера
-      if (isPasswordValid) {
-        const { password_hash, ...result } = user;
-        console.log('Returning trainer result:', { ...result, user_type: 'trainer' }); // Логируем результат для тренера
-        return { ...result, user_type: 'trainer' };
-      }
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    if (!isPasswordValid) {
+      return null;
     }
 
-    console.log('User not found or invalid password'); // Логируем, если пользователь не найден
-    return null;
+    const result = { ...user } as Omit<AuthenticatedEntity, 'password_hash'>;
+    delete (result as Partial<AuthenticatedEntity>).password_hash;
+    return { ...result, user_type: userType };
+  }
+
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<ValidatedUser | null> {
+    const client = await this.clientRepository.findOne({ where: { email } });
+    const validatedClient = await this.validateEntityPassword(
+      client,
+      password,
+      'client',
+    );
+    if (validatedClient) {
+      return validatedClient;
+    }
+
+    const trainer = await this.trainerRepository.findOne({ where: { email } });
+    return this.validateEntityPassword(trainer, password, 'trainer');
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
@@ -58,27 +69,24 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    console.log('Logging in user:', user); // Логируем информацию о пользователе
-
     // Если пользователь - клиент, получаем информацию о его тренере
-    let trainerInfo: any = undefined;
+    let trainerInfo: AuthResponse['user']['trainer'];
     if (user.user_type === 'client') {
       const clientWithTrainer = await this.clientRepository.findOne({
         where: { id: user.id },
-        relations: ['trainer']
+        relations: ['trainer'],
       });
-      trainerInfo = clientWithTrainer?.trainer;
-      console.log('Trainer info for client:', trainerInfo); // Логируем информацию о тренере
+      trainerInfo = clientWithTrainer?.trainer
+        ? toTrainerResponse(clientWithTrainer.trainer)
+        : undefined;
     }
 
     const payload = {
       email: user.email,
       sub: user.id,
-      user_type: user.user_type
+      user_type: user.user_type,
     };
     const access_token = this.jwtService.sign(payload);
-
-    console.log('Generated payload:', payload); // Логируем сгенерированный payload
 
     return {
       access_token,
@@ -90,5 +98,28 @@ export class AuthService {
         trainer: trainerInfo,
       },
     };
+  }
+
+  setAuthCookie(response: Response, accessToken: string): void {
+    const maxAgeSeconds = process.env.JWT_EXPIRES_IN
+      ? parseInt(process.env.JWT_EXPIRES_IN, 10) || 3600
+      : 3600;
+
+    response.cookie('token', accessToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: maxAgeSeconds * 1000,
+    });
+  }
+
+  clearAuthCookie(response: Response): void {
+    response.clearCookie('token', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
   }
 }

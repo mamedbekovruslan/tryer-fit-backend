@@ -13,77 +13,110 @@ import {
   Put,
   Delete,
   Patch,
+  NotFoundException,
 } from '@nestjs/common';
 import { TrainerService } from './trainer.service';
 import { ClientService } from './client.service';
 import type { CreateTrainerDto } from './trainer.service';
-import { Trainer } from './trainer.entity';
-import { Client } from './client.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import {
+  ClientResponse,
+  TrainerResponse,
+  toClientResponse,
+  toTrainerResponse,
+} from './user-response';
+import { AccessControlService } from '../auth/access-control.service';
+import type { AuthenticatedRequest } from '../auth/auth.types';
 
 @Controller('trainers')
 export class TrainerController {
   constructor(
     private readonly trainerService: TrainerService,
     private readonly clientService: ClientService,
+    private readonly accessControlService: AccessControlService,
   ) {}
 
   @Get()
-  async findAll(): Promise<Trainer[]> {
-    return await this.trainerService.findAll();
+  @UseGuards(JwtAuthGuard)
+  async findAll(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<TrainerResponse[]> {
+    this.accessControlService.assertTrainer(
+      req.user,
+      'Only trainers can access trainers list',
+    );
+
+    const trainers = await this.trainerService.findAll();
+    return trainers.map(toTrainerResponse);
   }
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() createTrainerDto: CreateTrainerDto): Promise<Trainer> {
+  async register(
+    @Body() createTrainerDto: CreateTrainerDto,
+  ): Promise<TrainerResponse> {
     // Check if trainer already exists
-    const existingTrainer = await this.trainerService.findByEmail(createTrainerDto.email);
+    const existingTrainer = await this.trainerService.findByEmail(
+      createTrainerDto.email,
+    );
     if (existingTrainer !== null) {
       throw new ConflictException('Trainer with this email already exists');
     }
 
     // Basic validation
-    if (!createTrainerDto.email || !createTrainerDto.password || !createTrainerDto.username) {
-      throw new BadRequestException('Email, password, and username are required');
+    if (
+      !createTrainerDto.email ||
+      !createTrainerDto.password ||
+      !createTrainerDto.username
+    ) {
+      throw new BadRequestException(
+        'Email, password, and username are required',
+      );
     }
 
-    return await this.trainerService.create(createTrainerDto);
+    const trainer = await this.trainerService.create(createTrainerDto);
+    return toTrainerResponse(trainer);
   }
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Request() req): Promise<Trainer> {
-    console.log('Requesting profile for user:', req.user); // Логируем информацию о пользователе
-
-    // Убедимся, что пользователь является тренером
-    if (req.user.user_type !== 'trainer') {
-      throw new BadRequestException('Only trainers can access their profile');
-    }
+  async getProfile(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<TrainerResponse> {
+    this.accessControlService.assertTrainer(
+      req.user,
+      'Only trainers can access their profile',
+    );
 
     const trainer = await this.trainerService.findById(req.user.sub);
     if (!trainer) {
-      throw new BadRequestException('Trainer not found');
+      throw new NotFoundException('Trainer not found');
     }
-    console.log('Returning trainer:', trainer); // Логируем возвращаемого тренера
-    return trainer;
+    return toTrainerResponse(trainer);
   }
 
   // Получить клиентов, которые не привязаны ни к какому тренеру
   @Get('unassigned-clients')
   @UseGuards(JwtAuthGuard)
-  async getUnassignedClients(@Request() req): Promise<Client[]> {
-    // Проверяем, что пользователь - тренер
-    if (req.user.user_type !== 'trainer') {
-      throw new BadRequestException('Only trainers can access unassigned clients');
-    }
+  async getUnassignedClients(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<ClientResponse[]> {
+    this.accessControlService.assertTrainer(
+      req.user,
+      'Only trainers can access unassigned clients',
+    );
 
-    return await this.clientService.getUnassignedClients();
+    const clients = await this.clientService.getUnassignedClients();
+    return clients.map(toClientResponse);
   }
 
   // Получить клиентов, привязанных к тренеру
   @Get(':id/clients')
   @UseGuards(JwtAuthGuard)
-  async getClients(@Request() req, @Param('id') id: string): Promise<Client[]> {
+  async getClients(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<ClientResponse[]> {
     const trainerId = parseInt(id, 10);
 
     // Проверяем, является ли id допустимым числом
@@ -91,22 +124,24 @@ export class TrainerController {
       throw new BadRequestException('Invalid trainer ID');
     }
 
-    // Проверяем, что пользователь - тренер и запрашивает своих клиентов
-    if (req.user.user_type !== 'trainer' || req.user.sub !== trainerId) {
-      throw new BadRequestException('Trainers can only access their own clients');
-    }
+    this.accessControlService.assertOwnTrainer(
+      req.user,
+      trainerId,
+      'Trainers can only access their own clients',
+    );
 
-    return await this.trainerService.getClientsByTrainerId(trainerId);
+    const clients = await this.trainerService.getClientsByTrainerId(trainerId);
+    return clients.map(toClientResponse);
   }
 
   // Привязать клиента к тренеру
   @Put(':trainerId/assign-client/:clientId')
   @UseGuards(JwtAuthGuard)
   async assignClientToTrainer(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('trainerId') trainerId: string,
-    @Param('clientId') clientId: string
-  ): Promise<Client> {
+    @Param('clientId') clientId: string,
+  ): Promise<ClientResponse> {
     const tId = parseInt(trainerId, 10);
     const cId = parseInt(clientId, 10);
 
@@ -115,22 +150,24 @@ export class TrainerController {
       throw new BadRequestException('Invalid trainer or client ID');
     }
 
-    // Проверяем, что пользователь - тренер и действует от своего имени
-    if (req.user.user_type !== 'trainer' || req.user.sub !== tId) {
-      throw new BadRequestException('Trainers can only assign clients to themselves');
-    }
+    this.accessControlService.assertOwnTrainer(
+      req.user,
+      tId,
+      'Trainers can only assign clients to themselves',
+    );
 
-    return await this.trainerService.assignClientToTrainer(cId, tId);
+    const client = await this.trainerService.assignClientToTrainer(cId, tId);
+    return toClientResponse(client);
   }
 
   // Отвязать клиента от тренера
   @Delete(':trainerId/unassign-client/:clientId')
   @UseGuards(JwtAuthGuard)
   async unassignClientFromTrainer(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('trainerId') trainerId: string,
-    @Param('clientId') clientId: string
-  ): Promise<Client> {
+    @Param('clientId') clientId: string,
+  ): Promise<ClientResponse> {
     const tId = parseInt(trainerId, 10);
     const cId = parseInt(clientId, 10);
 
@@ -139,21 +176,23 @@ export class TrainerController {
       throw new BadRequestException('Invalid trainer or client ID');
     }
 
-    // Проверяем, что пользователь - тренер и действует от своего имени
-    if (req.user.user_type !== 'trainer' || req.user.sub !== tId) {
-      throw new BadRequestException('Trainers can only unassign clients from themselves');
-    }
+    this.accessControlService.assertOwnTrainer(
+      req.user,
+      tId,
+      'Trainers can only unassign clients from themselves',
+    );
 
-    return await this.trainerService.unassignClientFromTrainer(cId);
+    const client = await this.trainerService.unassignClientFromTrainer(cId);
+    return toClientResponse(client);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
   async update(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Body() updateData: Partial<CreateTrainerDto>
-  ): Promise<Trainer> {
+    @Body() updateData: Partial<CreateTrainerDto>,
+  ): Promise<TrainerResponse> {
     const trainerId = parseInt(id, 10);
 
     // Проверяем, является ли id допустимым числом
@@ -161,22 +200,27 @@ export class TrainerController {
       throw new BadRequestException('Invalid trainer ID');
     }
 
-    // Проверяем, что пользователь - тренер и обновляет свой профиль
-    if (req.user.user_type !== 'trainer' || req.user.sub !== trainerId) {
-      throw new BadRequestException('Trainers can only update their own profile');
-    }
+    this.accessControlService.assertOwnTrainer(
+      req.user,
+      trainerId,
+      'Trainers can only update their own profile',
+    );
 
-    return await this.trainerService.updateTrainer(trainerId, updateData);
+    const trainer = await this.trainerService.updateTrainer(
+      trainerId,
+      updateData,
+    );
+    return toTrainerResponse(trainer);
   }
 
   // PATCH endpoint для обновления отдельных полей
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   async updateField(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Body() updateData: Partial<CreateTrainerDto>
-  ): Promise<Trainer> {
+    @Body() updateData: Partial<CreateTrainerDto>,
+  ): Promise<TrainerResponse> {
     const trainerId = parseInt(id, 10);
 
     // Проверяем, является ли id допустимым числом
@@ -184,17 +228,25 @@ export class TrainerController {
       throw new BadRequestException('Invalid trainer ID');
     }
 
-    // Проверяем, что пользователь - тренер и обновляет свой профиль
-    if (req.user.user_type !== 'trainer' || req.user.sub !== trainerId) {
-      throw new BadRequestException('Trainers can only update their own profile');
-    }
+    this.accessControlService.assertOwnTrainer(
+      req.user,
+      trainerId,
+      'Trainers can only update their own profile',
+    );
 
-    return await this.trainerService.updateTrainer(trainerId, updateData);
+    const trainer = await this.trainerService.updateTrainer(
+      trainerId,
+      updateData,
+    );
+    return toTrainerResponse(trainer);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Request() req, @Param('id') id: string): Promise<Trainer> {
+  async findOne(
+    @Request() _req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<TrainerResponse> {
     const trainerId = parseInt(id, 10);
 
     // Проверяем, является ли id допустимым числом
@@ -204,8 +256,8 @@ export class TrainerController {
 
     const trainer = await this.trainerService.findById(trainerId);
     if (!trainer) {
-      throw new BadRequestException('Trainer not found');
+      throw new NotFoundException('Trainer not found');
     }
-    return trainer;
+    return toTrainerResponse(trainer);
   }
 }

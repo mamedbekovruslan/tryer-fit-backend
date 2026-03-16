@@ -33,7 +33,9 @@ export class ClientNutritionPlanService {
     });
   }
 
-  async findByClientIdAndActive(clientId: number): Promise<ClientNutritionPlan[]> {
+  async findByClientIdAndActive(
+    clientId: number,
+  ): Promise<ClientNutritionPlan[]> {
     return await this.clientNutritionPlanRepository
       .createQueryBuilder('clientNutritionPlan')
       .leftJoinAndSelect('clientNutritionPlan.client', 'client')
@@ -45,13 +47,17 @@ export class ClientNutritionPlanService {
       .getMany();
   }
 
-  async create(planData: CreateClientNutritionPlanDto): Promise<ClientNutritionPlan> {
+  async create(
+    planData: CreateClientNutritionPlanDto,
+  ): Promise<ClientNutritionPlan> {
     // Проверяем, существует ли клиент
     const client = await this.clientRepository.findOne({
       where: { id: planData.clientId },
     });
     if (!client) {
-      throw new NotFoundException(`Client with ID ${planData.clientId} not found`);
+      throw new NotFoundException(
+        `Client with ID ${planData.clientId} not found`,
+      );
     }
 
     // Проверяем, существует ли план питания
@@ -59,7 +65,9 @@ export class ClientNutritionPlanService {
       where: { id: planData.nutritionPlanId },
     });
     if (!nutritionPlan) {
-      throw new NotFoundException(`Nutrition plan with ID ${planData.nutritionPlanId} not found`);
+      throw new NotFoundException(
+        `Nutrition plan with ID ${planData.nutritionPlanId} not found`,
+      );
     }
 
     const clientPlan = new ClientNutritionPlan();
@@ -77,10 +85,15 @@ export class ClientNutritionPlanService {
     });
   }
 
-  async update(id: number, planData: UpdateClientNutritionPlanDto): Promise<ClientNutritionPlan> {
+  async update(
+    id: number,
+    planData: UpdateClientNutritionPlanDto,
+  ): Promise<ClientNutritionPlan> {
     const existingPlan = await this.findOne(id);
     if (!existingPlan) {
-      throw new NotFoundException(`Client nutrition plan with ID ${id} not found`);
+      throw new NotFoundException(
+        `Client nutrition plan with ID ${id} not found`,
+      );
     }
 
     if (planData.clientId) {
@@ -88,7 +101,9 @@ export class ClientNutritionPlanService {
         where: { id: planData.clientId },
       });
       if (!client) {
-        throw new NotFoundException(`Client with ID ${planData.clientId} not found`);
+        throw new NotFoundException(
+          `Client with ID ${planData.clientId} not found`,
+        );
       }
       existingPlan.client = client;
     }
@@ -98,7 +113,9 @@ export class ClientNutritionPlanService {
         where: { id: planData.nutritionPlanId },
       });
       if (!nutritionPlan) {
-        throw new NotFoundException(`Nutrition plan with ID ${planData.nutritionPlanId} not found`);
+        throw new NotFoundException(
+          `Nutrition plan with ID ${planData.nutritionPlanId} not found`,
+        );
       }
       existingPlan.nutritionPlan = nutritionPlan;
     }
@@ -115,7 +132,9 @@ export class ClientNutritionPlanService {
 
     const updatedPlan = await this.findOne(id);
     if (!updatedPlan) {
-      throw new NotFoundException(`Client nutrition plan with ID ${id} not found after update`);
+      throw new NotFoundException(
+        `Client nutrition plan with ID ${id} not found after update`,
+      );
     }
     return updatedPlan;
   }
@@ -123,7 +142,9 @@ export class ClientNutritionPlanService {
   async remove(id: number): Promise<void> {
     const plan = await this.findOne(id);
     if (!plan) {
-      throw new NotFoundException(`Client nutrition plan with ID ${id} not found`);
+      throw new NotFoundException(
+        `Client nutrition plan with ID ${id} not found`,
+      );
     }
     await this.clientNutritionPlanRepository.delete(id);
   }

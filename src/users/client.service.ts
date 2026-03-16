@@ -1,6 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Client, FitnessGoal } from './client.entity';
 import { TrainerService } from './trainer.service';
 import * as bcrypt from 'bcrypt';
@@ -49,7 +53,9 @@ export class ClientService {
   async create(clientData: CreateClientDto): Promise<Client> {
     // Basic validation
     if (!clientData.email || !clientData.password || !clientData.username) {
-      throw new BadRequestException('Email, password, and username are required');
+      throw new BadRequestException(
+        'Email, password, and username are required',
+      );
     }
 
     // Validate email format
@@ -60,7 +66,9 @@ export class ClientService {
 
     // Validate password strength (at least 6 characters)
     if (clientData.password.length < 6) {
-      throw new BadRequestException('Password must be at least 6 characters long');
+      throw new BadRequestException(
+        'Password must be at least 6 characters long',
+      );
     }
 
     // Hash the password before saving
@@ -78,7 +86,7 @@ export class ClientService {
     if (clientData.trainer_id) {
       const trainer = await this.trainerService.findById(clientData.trainer_id);
       if (!trainer) {
-        throw new BadRequestException('Trainer not found');
+        throw new NotFoundException('Trainer not found');
       }
       client.trainer = trainer;
     }
@@ -110,19 +118,16 @@ export class ClientService {
   }
 
   async findById(id: number): Promise<Client | null> {
-    console.log('Searching for client with ID:', id); // Логируем ID, который ищем
-    const client = await this.clientRepository.findOne({
+    return await this.clientRepository.findOne({
       where: { id },
-      relations: ['trainer']
+      relations: ['trainer'],
     });
-    console.log('Found client:', client); // Логируем найденного клиента
-    return client;
   }
 
   async update(id: number, partialClient: Partial<Client>): Promise<Client> {
     const client = await this.clientRepository.findOne({ where: { id } });
     if (!client) {
-      throw new BadRequestException('Client not found');
+      throw new NotFoundException('Client not found');
     }
 
     // Обновляем только те поля, которые предоставлены

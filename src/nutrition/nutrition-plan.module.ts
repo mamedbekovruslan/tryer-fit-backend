@@ -7,7 +7,9 @@ import { Trainer } from '../users/trainer.entity';
 import { NutritionCategory } from './nutrition-category.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NutritionPlan, Trainer, NutritionCategory])],
+  imports: [
+    TypeOrmModule.forFeature([NutritionPlan, Trainer, NutritionCategory]),
+  ],
   providers: [NutritionPlanService],
   controllers: [NutritionPlanController],
   exports: [NutritionPlanService],

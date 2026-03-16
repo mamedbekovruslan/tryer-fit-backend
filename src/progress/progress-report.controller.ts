@@ -8,37 +8,52 @@ import {
   Delete,
   UseGuards,
   Request,
-  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ProgressReportService } from './progress-report.service';
-import type { CreateProgressReportDto, UpdateProgressReportDto } from './progress-report.service';
+import type {
+  CreateProgressReportDto,
+  UpdateProgressReportDto,
+} from './progress-report.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ProgressReport } from './progress-report.entity';
-import { ProgressReportComment } from './progress-report-comment.entity';
 import { CreateProgressReportCommentDto } from './dto/create-progress-report-comment.dto';
+import {
+  ProgressReportCommentResponse,
+  ProgressReportResponse,
+  toProgressReportCommentResponse,
+  toProgressReportResponse,
+} from './progress-response';
+import { AccessControlService } from '../auth/access-control.service';
+import type { AuthenticatedRequest } from '../auth/auth.types';
 
 @Controller('progress-reports')
 export class ProgressReportController {
-  constructor(private readonly progressReportService: ProgressReportService) {}
+  constructor(
+    private readonly progressReportService: ProgressReportService,
+    private readonly accessControlService: AccessControlService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(@Request() req, @Body() createProgressReportDto: CreateProgressReportDto): Promise<ProgressReport> {
-    console.log('Creating progress report with data:', createProgressReportDto);
-    console.log('Request user:', req.user);
-
-    // Проверяем, что пользователь является клиентом
-    if (req.user.user_type !== 'client') {
-      throw new BadRequestException('Only clients can create progress reports');
-    }
+  async create(
+    @Request() req: AuthenticatedRequest,
+    @Body() createProgressReportDto: CreateProgressReportDto,
+  ): Promise<ProgressReportResponse> {
+    this.accessControlService.assertClient(
+      req.user,
+      'Only clients can create progress reports',
+    );
 
     // Устанавливаем ID клиента из токена, если не предоставлен в запросе
     if (!createProgressReportDto.clientId) {
       createProgressReportDto.clientId = req.user.sub;
-      console.log('Set clientId from token:', req.user.sub);
-    } else if (createProgressReportDto.clientId !== req.user.sub) {
-      // Убедимся, что клиент не пытается создать отчет для другого клиента
-      throw new BadRequestException('You can only create progress reports for yourself');
+    } else {
+      this.accessControlService.assertOwnClient(
+        req.user,
+        createProgressReportDto.clientId,
+        'You can only create progress reports for yourself',
+      );
     }
 
     // Преобразуем дату, если она передана в виде строки
@@ -46,18 +61,25 @@ export class ProgressReportController {
       createProgressReportDto.date = new Date(createProgressReportDto.date);
     }
 
-    console.log('Final data to create:', createProgressReportDto);
-    return await this.progressReportService.create(createProgressReportDto);
+    const report = await this.progressReportService.create(
+      createProgressReportDto,
+    );
+    return toProgressReportResponse(report);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async findAll(@Request() req): Promise<ProgressReport[]> {
+  async findAll(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<ProgressReportResponse[]> {
     // Клиенты могут получать только свои отчеты
     if (req.user.user_type === 'client') {
-      return await this.progressReportService.findAllByClient(req.user.sub);
+      const reports = await this.progressReportService.findAllByClient(
+        req.user.sub,
+      );
+      return reports.map(toProgressReportResponse);
     }
-    
+
     // Тренеры могут получать отчеты своих клиентов (реализация для будущего использования)
     // throw new BadRequestException('Trainers cannot access progress reports yet');
     return [];
@@ -66,99 +88,127 @@ export class ProgressReportController {
   @Get('client/:clientId')
   @UseGuards(JwtAuthGuard)
   async findAllByTrainerForClient(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('clientId') clientId: string,
-  ): Promise<ProgressReport[]> {
-    if (req.user.user_type !== 'trainer') {
-      throw new BadRequestException('Only trainers can access client progress reports');
-    }
+  ): Promise<ProgressReportResponse[]> {
+    this.accessControlService.assertTrainer(
+      req.user,
+      'Only trainers can access client progress reports',
+    );
 
-    return await this.progressReportService.findAllByTrainerClient(
+    const reports = await this.progressReportService.findAllByTrainerClient(
       req.user.sub,
       parseInt(clientId, 10),
     );
+    return reports.map(toProgressReportResponse);
   }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  async findOne(@Request() req, @Param('id') id: string): Promise<ProgressReport> {
+  async findOne(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<ProgressReportResponse> {
     const reportId = parseInt(id, 10);
-    
+
     // Клиенты могут получать только свои отчеты
     if (req.user.user_type === 'client') {
-      const report = await this.progressReportService.findOne(reportId, req.user.sub);
+      const report = await this.progressReportService.findOne(
+        reportId,
+        req.user.sub,
+      );
       if (!report) {
-        throw new BadRequestException('Progress report not found or does not belong to you');
+        throw new NotFoundException('Progress report not found');
       }
-      return report;
-    }
-    
-    // Тренеры могут получать отчеты своих клиентов (реализация для будущего использования)
-    if (req.user.user_type === 'trainer') {
-      const report = await this.progressReportService.findOneForTrainer(reportId, req.user.sub);
-      if (!report) {
-        throw new BadRequestException('Progress report not found');
-      }
-      return report;
+      return toProgressReportResponse(report);
     }
 
-    throw new BadRequestException('Access denied');
+    // Тренеры могут получать отчеты своих клиентов (реализация для будущего использования)
+    if (req.user.user_type === 'trainer') {
+      const report = await this.progressReportService.findOneForTrainer(
+        reportId,
+        req.user.sub,
+      );
+      if (!report) {
+        throw new NotFoundException('Progress report not found');
+      }
+      return toProgressReportResponse(report);
+    }
+
+    throw new ForbiddenException('Access denied');
   }
 
   @Get(':id/comments')
   @UseGuards(JwtAuthGuard)
-  async getComments(@Request() req, @Param('id') id: string): Promise<ProgressReportComment[]> {
-    return await this.progressReportService.getComments(parseInt(id, 10), {
-      userType: req.user.user_type,
-      userId: req.user.sub,
-    });
+  async getComments(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<ProgressReportCommentResponse[]> {
+    const comments = await this.progressReportService.getComments(
+      parseInt(id, 10),
+      {
+        userType: req.user.user_type,
+        userId: req.user.sub,
+      },
+    );
+    return comments.map(toProgressReportCommentResponse);
   }
 
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
   async addComment(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() createCommentDto: CreateProgressReportCommentDto,
-  ): Promise<ProgressReportComment> {
-    if (req.user.user_type !== 'trainer') {
-      throw new BadRequestException('Only trainers can add comments');
-    }
+  ): Promise<ProgressReportCommentResponse> {
+    this.accessControlService.assertTrainer(
+      req.user,
+      'Only trainers can add comments',
+    );
 
-    return await this.progressReportService.addComment(
+    const comment = await this.progressReportService.addComment(
       parseInt(id, 10),
       req.user.sub,
       createCommentDto.comment,
     );
+    return toProgressReportCommentResponse(comment);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
   async update(
-    @Request() req, 
-    @Param('id') id: string, 
-    @Body() updateProgressReportDto: UpdateProgressReportDto
-  ): Promise<ProgressReport> {
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() updateProgressReportDto: UpdateProgressReportDto,
+  ): Promise<ProgressReportResponse> {
     const reportId = parseInt(id, 10);
-    
+
     // Клиенты могут обновлять только свои отчеты
     if (req.user.user_type === 'client') {
-      return await this.progressReportService.update(reportId, req.user.sub, updateProgressReportDto);
+      const report = await this.progressReportService.update(
+        reportId,
+        req.user.sub,
+        updateProgressReportDto,
+      );
+      return toProgressReportResponse(report);
     }
-    
-    throw new BadRequestException('Access denied');
+
+    throw new ForbiddenException('Access denied');
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async remove(@Request() req, @Param('id') id: string): Promise<void> {
+  async remove(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<void> {
     const reportId = parseInt(id, 10);
-    
+
     // Клиенты могут удалять только свои отчеты
     if (req.user.user_type === 'client') {
       await this.progressReportService.remove(reportId, req.user.sub);
     } else {
-      throw new BadRequestException('Access denied');
+      throw new ForbiddenException('Access denied');
     }
   }
 }

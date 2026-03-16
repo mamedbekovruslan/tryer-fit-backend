@@ -41,14 +41,19 @@ export class NutritionPlanService {
     });
   }
 
-  async create(planData: CreateNutritionPlanDto, trainerId?: number): Promise<NutritionPlan> {
+  async create(
+    planData: CreateNutritionPlanDto,
+    trainerId?: number,
+  ): Promise<NutritionPlan> {
     // Найдем категорию по ID
     const category = await this.nutritionCategoryRepository.findOne({
       where: { id: planData.nutritionCategoryId },
     });
 
     if (!category) {
-      throw new NotFoundException(`Nutrition category with ID ${planData.nutritionCategoryId} not found`);
+      throw new NotFoundException(
+        `Nutrition category with ID ${planData.nutritionCategoryId} not found`,
+      );
     }
 
     // Если передан trainerId, получим тренера
@@ -81,7 +86,9 @@ export class NutritionPlanService {
     });
 
     if (!result) {
-      throw new NotFoundException(`Created nutrition plan with ID ${savedPlan.id} not found after creation`);
+      throw new NotFoundException(
+        `Created nutrition plan with ID ${savedPlan.id} not found after creation`,
+      );
     }
 
     return result;
@@ -94,7 +101,10 @@ export class NutritionPlanService {
     });
   }
 
-  async update(id: number, planData: UpdateNutritionPlanDto): Promise<NutritionPlan> {
+  async update(
+    id: number,
+    planData: UpdateNutritionPlanDto,
+  ): Promise<NutritionPlan> {
     const existingPlan = await this.findOne(id);
     if (!existingPlan) {
       throw new NotFoundException(`Nutrition plan with ID ${id} not found`);
@@ -107,7 +117,9 @@ export class NutritionPlanService {
       });
 
       if (!category) {
-        throw new NotFoundException(`Nutrition category with ID ${planData.nutritionCategoryId} not found`);
+        throw new NotFoundException(
+          `Nutrition category with ID ${planData.nutritionCategoryId} not found`,
+        );
       }
 
       existingPlan.nutritionCategory = category;
@@ -124,7 +136,9 @@ export class NutritionPlanService {
 
     const updatedPlan = await this.findOne(id);
     if (!updatedPlan) {
-      throw new NotFoundException(`Nutrition plan with ID ${id} not found after update`);
+      throw new NotFoundException(
+        `Nutrition plan with ID ${id} not found after update`,
+      );
     }
     return updatedPlan;
   }

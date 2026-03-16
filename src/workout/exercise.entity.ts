@@ -29,7 +29,12 @@ export class Exercise {
   @Column({ length: 50, nullable: true, comment: 'Вес' })
   weight?: string;
 
-  @Column({ name: 'rest_time', length: 50, nullable: true, comment: 'Время отдыха' })
+  @Column({
+    name: 'rest_time',
+    length: 50,
+    nullable: true,
+    comment: 'Время отдыха',
+  })
   restTime?: string;
 
   @Column({ name: 'exercise_order', type: 'integer', default: 0 })

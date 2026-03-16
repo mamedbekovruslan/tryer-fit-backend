@@ -19,28 +19,76 @@ export class ProgressReport {
   @Column({ type: 'timestamp', nullable: false })
   date: Date;
 
-  @Column({ name: 'weight', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'weight',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   weight?: number;
 
-  @Column({ name: 'waist', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'waist',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   waist?: number;
 
-  @Column({ name: 'hips', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'hips',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   hips?: number;
 
-  @Column({ name: 'chest', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'chest',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   chest?: number;
 
-  @Column({ name: 'arms', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'arms',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   arms?: number;
 
-  @Column({ name: 'thighs', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'thighs',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   thighs?: number;
 
-  @Column({ name: 'body_fat', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'body_fat',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   bodyFat?: number;
 
-  @Column({ name: 'muscle_mass', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'muscle_mass',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   muscleMass?: number;
 
   @Column({ type: 'text', nullable: true })

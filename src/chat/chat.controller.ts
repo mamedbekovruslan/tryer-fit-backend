@@ -10,10 +10,18 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SendMessageDto } from './dto/send-message.dto';
+import {
+  ChatMessageResponse,
+  ChatSummaryResponse,
+  toChatMessageResponse,
+  toChatSummaryResponse,
+} from './chat-response';
+import type { AuthenticatedRequest } from '../auth/auth.types';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -25,11 +33,11 @@ export class ChatController {
    */
   @Get('messages/:userId')
   async getConversation(
-    @Request() req,
-    @Param('userId') otherUserId: number,
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Param('userId', ParseIntPipe) otherUserId: number,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ): Promise<ChatMessageResponse[]> {
     const userId = req.user.sub;
     const messages = await this.chatService.getConversation(
       userId,
@@ -37,17 +45,20 @@ export class ChatController {
       limit ? parseInt(limit.toString(), 10) : 50,
       offset ? parseInt(offset.toString(), 10) : 0,
     );
-    return messages;
+    return messages.map(toChatMessageResponse);
   }
 
   /**
    * Получить все чаты пользователя
    */
   @Get('chats')
-  async getUserChats(@Request() req) {
+  async getUserChats(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<ChatSummaryResponse[]> {
     const userId = req.user.sub;
     const userType = req.user.user_type;
-    return await this.chatService.getUserChats(userId, userType);
+    const chats = await this.chatService.getUserChats(userId, userType);
+    return chats.map(toChatSummaryResponse);
   }
 
   /**
@@ -55,9 +66,16 @@ export class ChatController {
    */
   @Post('messages')
   @HttpCode(HttpStatus.CREATED)
-  async sendMessage(@Request() req, @Body() sendMessageDto: SendMessageDto) {
+  async sendMessage(
+    @Request() req: AuthenticatedRequest,
+    @Body() sendMessageDto: SendMessageDto,
+  ): Promise<ChatMessageResponse> {
     const senderId = req.user.sub;
-    return await this.chatService.sendMessage(senderId, sendMessageDto);
+    const message = await this.chatService.sendMessage(
+      senderId,
+      sendMessageDto,
+    );
+    return toChatMessageResponse(message);
   }
 
   /**
@@ -65,9 +83,12 @@ export class ChatController {
    */
   @Patch('messages/:senderId/read')
   @HttpCode(HttpStatus.OK)
-  async markMessagesAsRead(@Request() req, @Param('senderId') senderId: number) {
+  async markMessagesAsRead(
+    @Request() req: AuthenticatedRequest,
+    @Param('senderId', ParseIntPipe) senderId: number,
+  ) {
     const userId = req.user.sub;
-    await this.chatService.markMessagesAsRead(userId, parseInt(senderId.toString(), 10));
+    await this.chatService.markMessagesAsRead(userId, senderId);
     return { success: true };
   }
 
@@ -75,11 +96,12 @@ export class ChatController {
    * Получить непрочитанные сообщения
    */
   @Get('messages/unread/:senderId')
-  async getUnreadMessages(@Request() req, @Param('senderId') senderId: number) {
+  async getUnreadMessages(
+    @Request() req: AuthenticatedRequest,
+    @Param('senderId', ParseIntPipe) senderId: number,
+  ): Promise<ChatMessageResponse[]> {
     const userId = req.user.sub;
-    return await this.chatService.getUnreadMessages(
-      userId,
-      parseInt(senderId.toString(), 10),
-    );
+    const messages = await this.chatService.getUnreadMessages(userId, senderId);
+    return messages.map(toChatMessageResponse);
   }
 }

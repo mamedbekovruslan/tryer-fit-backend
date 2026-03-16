@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsInt, IsEnum, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  IsEnum,
+  MinLength,
+} from 'class-validator';
 import { SenderType } from '../chat-message.entity';
 
 export class SendMessageDto {

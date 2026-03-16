@@ -18,7 +18,9 @@ export class NutritionCategoryService {
     });
   }
 
-  async create(categoryData: CreateNutritionCategoryDto): Promise<NutritionCategory> {
+  async create(
+    categoryData: CreateNutritionCategoryDto,
+  ): Promise<NutritionCategory> {
     const category = new NutritionCategory();
     Object.assign(category, categoryData);
 
@@ -31,7 +33,10 @@ export class NutritionCategoryService {
     });
   }
 
-  async update(id: number, categoryData: UpdateNutritionCategoryDto): Promise<NutritionCategory> {
+  async update(
+    id: number,
+    categoryData: UpdateNutritionCategoryDto,
+  ): Promise<NutritionCategory> {
     const existingCategory = await this.findOne(id);
     if (!existingCategory) {
       throw new NotFoundException(`Nutrition category with ID ${id} not found`);
@@ -39,7 +44,9 @@ export class NutritionCategoryService {
     await this.nutritionCategoryRepository.update(id, categoryData);
     const updatedCategory = await this.findOne(id);
     if (!updatedCategory) {
-      throw new NotFoundException(`Nutrition category with ID ${id} not found after update`);
+      throw new NotFoundException(
+        `Nutrition category with ID ${id} not found after update`,
+      );
     }
     return updatedCategory;
   }

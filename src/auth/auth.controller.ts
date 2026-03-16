@@ -1,7 +1,19 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  UseGuards,
+  Request,
+  Response as NestResponse,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { LoginDto } from './auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import type { Response as ExpressResponse } from 'express';
+import type { AuthenticatedRequest } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -9,15 +21,25 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @NestResponse({ passthrough: true }) response: ExpressResponse,
+  ) {
+    const result = await this.authService.login(loginDto);
+    this.authService.setAuthCookie(response, result.access_token);
+    return result;
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  logout(@NestResponse({ passthrough: true }) response: ExpressResponse) {
+    this.authService.clearAuthCookie(response);
+    return { success: true };
   }
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Request() req) {
-    console.log('Getting profile for user:', req.user); // Логируем информацию о пользователе
-    // Возвращаем информацию о пользователе из токена
+  getProfile(@Request() req: AuthenticatedRequest) {
     return req.user;
   }
 }
