@@ -89,10 +89,14 @@ export class ClientController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   async findOne(
-    @Request() _req: AuthenticatedRequest,
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
   ): Promise<ClientResponse> {
     const clientId = parseInt(id, 10);
+    await this.accessControlService.assertUserCanAccessClient(
+      req.user,
+      clientId,
+    );
     const client = await this.clientService.findById(clientId);
     if (!client) {
       throw new NotFoundException('Client not found');

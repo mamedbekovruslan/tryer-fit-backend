@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { DataSource, type DataSourceOptions } from 'typeorm';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Client } from './users/client.entity';

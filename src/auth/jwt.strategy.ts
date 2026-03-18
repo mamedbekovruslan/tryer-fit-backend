@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { AuthUser, JwtPayload } from './auth.types';
+import { getJwtSecret } from '../config/security-config';
 
 function extractJwtFromCookie(
   request: { headers?: { cookie?: string } } | undefined,
@@ -30,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'default_secret_key',
+      secretOrKey: getJwtSecret(),
     });
   }
 

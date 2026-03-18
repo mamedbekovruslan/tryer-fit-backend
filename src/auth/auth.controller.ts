@@ -9,6 +9,7 @@ import {
   Request,
   Response as NestResponse,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import type { LoginDto } from './auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -21,6 +22,13 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   async login(
     @Body() loginDto: LoginDto,
     @NestResponse({ passthrough: true }) response: ExpressResponse,

@@ -102,6 +102,32 @@ export class AccessControlService {
     return this.assertTrainerOwnsClient(user.sub, clientId);
   }
 
+  async assertUserCanAccessChatWith(
+    user: AuthUser,
+    otherUserId: number,
+  ): Promise<void> {
+    if (user.user_type === 'client') {
+      const client = await this.clientRepository.findOne({
+        where: { id: user.sub },
+        relations: ['trainer'],
+      });
+
+      if (!client) {
+        throw new NotFoundException('Client not found');
+      }
+
+      if (!client.trainer || client.trainer.id !== otherUserId) {
+        throw new ForbiddenException(
+          'Clients can only access chat with their assigned trainer',
+        );
+      }
+
+      return;
+    }
+
+    await this.assertTrainerOwnsClient(user.sub, otherUserId);
+  }
+
   assertUserCanAccessClientResource(
     user: AuthUser,
     clientId: number,

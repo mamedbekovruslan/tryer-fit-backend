@@ -6,6 +6,11 @@ import { newDb } from 'pg-mem';
 import request, { type SuperAgentTest } from 'supertest';
 import type { Express } from 'express';
 import { JwtModule } from '@nestjs/jwt';
+
+process.env.JWT_SECRET ??= 'test_secret_key';
+process.env.JWT_EXPIRES_IN ??= '3600';
+process.env.NODE_ENV ??= 'test';
+
 import { appEntities } from '../../src/data-source';
 import { AuthModule } from '../../src/auth/auth.module';
 import { ClientModule } from '../../src/users/client.module';
@@ -28,7 +33,7 @@ import {
 } from '../../src/users/trainer.service';
 import { AuthService } from '../../src/auth/auth.service';
 
-const JWT_SECRET = 'test_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 async function createPgMemDataSource(): Promise<DataSource> {
   const db = newDb({ autoCreateForeignKeyIndices: true });

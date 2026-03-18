@@ -1,12 +1,16 @@
+import 'dotenv/config';
 import 'reflect-metadata';
+import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
+import { getAllowedOrigins } from './config/security-config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.use(helmet());
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
 
@@ -19,11 +23,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      process.env.FRONTEND_URL,
-    ].filter(Boolean),
+    origin: getAllowedOrigins(),
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders:

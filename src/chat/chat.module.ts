@@ -7,17 +7,20 @@ import { ChatMessage } from './chat-message.entity';
 import { Client } from '../users/client.entity';
 import { Trainer } from '../users/trainer.entity';
 import { JwtModule } from '@nestjs/jwt';
+import { AccessControlModule } from '../auth/access-control.module';
+import { getJwtExpiresIn, getJwtSecret } from '../config/security-config';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ChatMessage, Client, Trainer]),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'default_secret_key',
-      signOptions: {
-        expiresIn: process.env.JWT_EXPIRES_IN
-          ? parseInt(process.env.JWT_EXPIRES_IN, 10) || 3600
-          : 3600,
-      },
+    AccessControlModule,
+    JwtModule.registerAsync({
+      useFactory: () => ({
+        secret: getJwtSecret(),
+        signOptions: {
+          expiresIn: getJwtExpiresIn(),
+        },
+      }),
     }),
   ],
   providers: [ChatService, ChatGateway],

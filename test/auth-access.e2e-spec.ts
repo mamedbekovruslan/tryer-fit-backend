@@ -67,6 +67,25 @@ describe('Auth and Access (e2e)', () => {
       .expect(401);
   });
 
+  it('POST /auth/login is rate limited after repeated failures', async () => {
+    const { payload } = await registerClient(context.app, {
+      username: 'throttled_client',
+      email: 'throttled_client@test.dev',
+    });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await request(getHttpApp(context.app))
+        .post('/auth/login')
+        .send({ email: payload.email, password: 'wrong-password' })
+        .expect(401);
+    }
+
+    await request(getHttpApp(context.app))
+      .post('/auth/login')
+      .send({ email: payload.email, password: 'wrong-password' })
+      .expect(429);
+  });
+
   it('POST /auth/logout clears auth cookie', async () => {
     const { payload } = await registerClient(context.app);
     const { agent } = await loginAgent(context.app, {

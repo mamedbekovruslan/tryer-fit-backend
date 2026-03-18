@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -16,6 +16,7 @@ import { TrainerNutritionModule } from './nutrition/trainer-nutrition.module';
 import { TrainerWorkoutModule } from './workout/trainer-workout.module';
 import { ChatModule } from './chat/chat.module';
 import { appDataSourceOptions } from './data-source';
+import { CsrfProtectionMiddleware } from './security/csrf-protection.middleware';
 
 @Module({
   imports: [
@@ -37,4 +38,8 @@ import { appDataSourceOptions } from './data-source';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CsrfProtectionMiddleware).forRoutes('*');
+  }
+}

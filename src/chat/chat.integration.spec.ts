@@ -223,6 +223,84 @@ describe('Chat integration', () => {
     expect(conversation[0].message).toBe('message A');
   });
 
+  it('client cannot read chat with trainer that is not assigned', async () => {
+    const trainerAllowed = await createTrainerAccount(context, {
+      email: 'read_allowed_trainer@test.dev',
+      username: 'read_allowed_trainer',
+    });
+    const trainerDenied = await createTrainerAccount(context, {
+      email: 'read_denied_trainer@test.dev',
+      username: 'read_denied_trainer',
+    });
+    const client = await createClientAccount(context, {
+      email: 'read_guard_client@test.dev',
+      username: 'read_guard_client',
+    });
+
+    await trainerController.assignClientToTrainer(
+      createRequest({
+        sub: trainerAllowed.entity.id,
+        userId: trainerAllowed.entity.id,
+        email: trainerAllowed.entity.email,
+        user_type: 'trainer',
+      }),
+      String(trainerAllowed.entity.id),
+      String(client.entity.id),
+    );
+
+    await expect(
+      chatController.getConversation(
+        createRequest({
+          sub: client.entity.id,
+          userId: client.entity.id,
+          email: client.entity.email,
+          user_type: 'client',
+        }),
+        trainerDenied.entity.id,
+      ),
+    ).rejects.toThrow(
+      'Clients can only access chat with their assigned trainer',
+    );
+  });
+
+  it('trainer cannot read chat for client that is not assigned to them', async () => {
+    const trainerAllowed = await createTrainerAccount(context, {
+      email: 'owning_trainer@test.dev',
+      username: 'owning_trainer',
+    });
+    const trainerDenied = await createTrainerAccount(context, {
+      email: 'foreign_trainer@test.dev',
+      username: 'foreign_trainer',
+    });
+    const client = await createClientAccount(context, {
+      email: 'foreign_client@test.dev',
+      username: 'foreign_client',
+    });
+
+    await trainerController.assignClientToTrainer(
+      createRequest({
+        sub: trainerAllowed.entity.id,
+        userId: trainerAllowed.entity.id,
+        email: trainerAllowed.entity.email,
+        user_type: 'trainer',
+      }),
+      String(trainerAllowed.entity.id),
+      String(client.entity.id),
+    );
+
+    await expect(
+      chatController.getUnreadMessages(
+        createRequest({
+          sub: trainerDenied.entity.id,
+          userId: trainerDenied.entity.id,
+          email: trainerDenied.entity.email,
+          user_type: 'trainer',
+        }),
+        client.entity.id,
+      ),
+    ).rejects.toThrow('Client is not assigned to this trainer');
+  });
+
   it('mark as read updates unread state', async () => {
     const trainer = await createTrainerAccount(context, {
       email: 'read_trainer@test.dev',

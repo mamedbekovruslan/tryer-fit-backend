@@ -134,6 +134,29 @@ describe('Auth and Access integration', () => {
     ).toThrow('Clients can only access their own data');
   });
 
+  it('client cannot fetch another client profile by id', async () => {
+    const firstClient = await createClientAccount(context, {
+      email: 'fetch_client_a@test.dev',
+      username: 'fetch_client_a',
+    });
+    const secondClient = await createClientAccount(context, {
+      email: 'fetch_client_b@test.dev',
+      username: 'fetch_client_b',
+    });
+
+    await expect(
+      clientController.findOne(
+        createRequest({
+          sub: firstClient.entity.id,
+          userId: firstClient.entity.id,
+          email: firstClient.entity.email,
+          user_type: 'client',
+        }),
+        String(secondClient.entity.id),
+      ),
+    ).rejects.toThrow('Clients can only access their own data');
+  });
+
   it('trainer cannot update another trainer profile', async () => {
     const trainerA = await createTrainerAccount(context, {
       email: 'trainer_a@test.dev',
