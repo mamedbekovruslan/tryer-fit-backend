@@ -16,14 +16,14 @@ describe('AppController', () => {
 
   describe('health', () => {
     it('should return health status', () => {
-      const result = {
-        status: 'OK',
-        timestamp: new Date(),
-      };
-      jest
-        .spyOn(global.Date, 'now')
-        .mockImplementation(() => result.timestamp.getTime());
-      expect(appController.getHealth()).toEqual(result);
+      const beforeCall = Date.now();
+      const result = appController.getHealth();
+      const afterCall = Date.now();
+
+      expect(result.status).toBe('OK');
+      expect(result.timestamp).toBeInstanceOf(Date);
+      expect(result.timestamp.getTime()).toBeGreaterThanOrEqual(beforeCall);
+      expect(result.timestamp.getTime()).toBeLessThanOrEqual(afterCall);
     });
   });
 });

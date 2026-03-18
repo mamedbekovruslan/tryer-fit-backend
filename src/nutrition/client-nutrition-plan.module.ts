@@ -5,10 +5,12 @@ import { ClientNutritionPlanService } from './client-nutrition-plan.service';
 import { ClientNutritionPlanController } from './client-nutrition-plan.controller';
 import { Client } from '../users/client.entity';
 import { NutritionPlan } from './nutrition-plan.entity';
+import { AccessControlModule } from '../auth/access-control.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ClientNutritionPlan, Client, NutritionPlan]),
+    AccessControlModule,
   ],
   providers: [ClientNutritionPlanService],
   controllers: [ClientNutritionPlanController],

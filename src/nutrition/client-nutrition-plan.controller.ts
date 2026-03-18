@@ -8,6 +8,7 @@ import {
   Put,
   UseGuards,
   NotFoundException,
+  Request,
 } from '@nestjs/common';
 import { ClientNutritionPlanService } from './client-nutrition-plan.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -17,11 +18,14 @@ import {
   ClientNutritionPlanResponse,
   toClientNutritionPlanResponse,
 } from './nutrition-response';
+import { AccessControlService } from '../auth/access-control.service';
+import type { AuthenticatedRequest } from '../auth/auth.types';
 
 @Controller('client-nutrition-plans')
 export class ClientNutritionPlanController {
   constructor(
     private readonly clientNutritionPlanService: ClientNutritionPlanService,
+    private readonly accessControlService: AccessControlService,
   ) {}
 
   @Get()
@@ -34,17 +38,28 @@ export class ClientNutritionPlanController {
   @Get('client/:clientId')
   @UseGuards(JwtAuthGuard)
   async findByClient(
+    @Request() req: AuthenticatedRequest,
     @Param('clientId') clientId: number,
   ): Promise<ClientNutritionPlanResponse[]> {
+    await this.accessControlService.assertUserCanAccessClient(
+      req.user,
+      clientId,
+    );
     const plans =
       await this.clientNutritionPlanService.findByClientId(clientId);
     return plans.map(toClientNutritionPlanResponse);
   }
 
   @Get('client/:clientId/active')
+  @UseGuards(JwtAuthGuard)
   async findByClientAndActive(
+    @Request() req: AuthenticatedRequest,
     @Param('clientId') clientId: number,
   ): Promise<ClientNutritionPlanResponse[]> {
+    await this.accessControlService.assertUserCanAccessClient(
+      req.user,
+      clientId,
+    );
     const plans =
       await this.clientNutritionPlanService.findByClientIdAndActive(clientId);
     return plans.map(toClientNutritionPlanResponse);
