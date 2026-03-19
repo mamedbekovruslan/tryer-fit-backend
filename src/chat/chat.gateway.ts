@@ -14,6 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import type { JwtPayload, UserType } from '../auth/auth.types';
+import { getAllowedOrigins } from '../config/security-config';
 
 interface SocketAuthData {
   userId?: number;
@@ -56,7 +57,7 @@ function extractTokenFromCookieHeader(cookieHeader?: string): string | null {
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: getAllowedOrigins(),
     credentials: true,
   },
   namespace: 'chat',

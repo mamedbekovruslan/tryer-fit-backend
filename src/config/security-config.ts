@@ -29,8 +29,27 @@ export function getJwtExpiresIn(): number {
 }
 
 export function getAllowedOrigins(): string[] {
-  return [...DEFAULT_ALLOWED_ORIGINS, process.env.FRONTEND_URL]
+  const configuredOrigins = [
+    process.env.FRONTEND_URL,
+    ...(process.env.ALLOWED_ORIGINS?.split(',') ?? []),
+  ];
+
+  return [...DEFAULT_ALLOWED_ORIGINS, ...configuredOrigins]
     .filter((value): value is string => Boolean(value))
-    .map((value) => value.trim())
-    .filter(Boolean);
+    .map(normalizeOrigin)
+    .filter((value): value is string => Boolean(value));
+}
+
+function normalizeOrigin(value: string): string | null {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return trimmed.replace(/\/+$/, '');
+  }
 }
