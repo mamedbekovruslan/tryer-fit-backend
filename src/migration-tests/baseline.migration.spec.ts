@@ -1,7 +1,7 @@
 import { DataSource, type DataSourceOptions } from 'typeorm';
 import { newDb } from 'pg-mem';
 import { appEntities } from '../data-source';
-import { Baseline1773306775975 } from './1773306775975-Baseline';
+import { Baseline1773306775975 } from '../migrations/1773306775975-Baseline';
 
 describe('Baseline migration smoke', () => {
   let dataSource: DataSource;
