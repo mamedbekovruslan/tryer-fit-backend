@@ -9,6 +9,7 @@ import { LoginDto, AuthResponse } from './auth.dto';
 import type { Response } from 'express';
 import type { UserType } from './auth.types';
 import { toTrainerResponse } from '../users/user-response';
+import type { CookieOptions } from 'express';
 
 type AuthenticatedEntity = Client | Trainer;
 
@@ -105,20 +106,23 @@ export class AuthService {
       : 3600;
 
     response.cookie('token', accessToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
+      ...getAuthCookieOptions(),
       maxAge: maxAgeSeconds * 1000,
     });
   }
 
   clearAuthCookie(response: Response): void {
-    response.clearCookie('token', {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-    });
+    response.clearCookie('token', getAuthCookieOptions());
   }
+}
+
+function getAuthCookieOptions(): CookieOptions {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  return {
+    httpOnly: true,
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
+    path: '/',
+  };
 }
