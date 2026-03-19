@@ -41,7 +41,6 @@ import type { AuthenticatedRequest } from '../auth/auth.types';
 export class TrainerWorkoutController {
   constructor(private readonly trainerWorkoutService: TrainerWorkoutService) {}
 
-  // Workout Categories
   @Get('categories')
   async getTrainerWorkoutCategories(
     @Req() req: AuthenticatedRequest,
@@ -89,7 +88,6 @@ export class TrainerWorkoutController {
     await this.trainerWorkoutService.deleteWorkoutCategory(trainerId, id);
   }
 
-  // Workout Programs
   @Get('programs')
   async getAllWorkoutPrograms(
     @Req() req: AuthenticatedRequest,
@@ -164,7 +162,6 @@ export class TrainerWorkoutController {
     return toWorkoutProgramResponse(program);
   }
 
-  // Workout Days
   @Get('programs/:programId/days')
   async getWorkoutDaysByProgram(
     @Req() req: AuthenticatedRequest,
@@ -216,7 +213,6 @@ export class TrainerWorkoutController {
     await this.trainerWorkoutService.deleteWorkoutDay(trainerId, id);
   }
 
-  // Exercises
   @Get('days/:dayId/exercises')
   async getExercisesByDay(
     @Req() req: AuthenticatedRequest,
@@ -268,7 +264,6 @@ export class TrainerWorkoutController {
     await this.trainerWorkoutService.deleteExercise(trainerId, id);
   }
 
-  // Client Workout Programs
   @Post('client-programs')
   async assignWorkoutProgramToClient(
     @Req() req: AuthenticatedRequest,

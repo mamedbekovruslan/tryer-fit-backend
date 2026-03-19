@@ -97,14 +97,12 @@ export class ChatGateway
       socketData.userId = userId;
       socketData.userType = userType;
 
-      // Сохраняем подключение
       this.connectedClients.set(userId, client.id);
 
       this.logger.log(
         `Client connected: ${userId} (${userType}) - Socket: ${client.id}`,
       );
 
-      // Отправляем подтверждение подключения
       client.emit('connected', { userId, userType });
     } catch (error: unknown) {
       const message =
@@ -134,14 +132,11 @@ export class ChatGateway
         throw new UnauthorizedException('User not authenticated');
       }
 
-      // Отправляем сообщение через сервис
       const message = await this.chatService.sendMessage(senderId, data);
 
-      // Находим socket получателя
       const receiverSocketId = this.connectedClients.get(data.receiverId);
 
       if (receiverSocketId) {
-        // Отправляем сообщение получателю в реальном времени
         this.server.to(receiverSocketId).emit('receiveMessage', {
           id: message.id,
           senderId: message.senderId,
@@ -153,7 +148,6 @@ export class ChatGateway
         });
       }
 
-      // Отправляем подтверждение отправителю
       client.emit('messageSent', {
         id: message.id,
         senderId: message.senderId,
@@ -190,7 +184,6 @@ export class ChatGateway
 
       await this.chatService.markMessagesAsRead(userId, data.senderId);
 
-      // Уведомляем отправителя о прочтении
       const senderSocketId = this.connectedClients.get(data.senderId);
       if (senderSocketId) {
         this.server.to(senderSocketId).emit('messagesRead', {

@@ -69,7 +69,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Если пользователь - клиент, получаем информацию о его тренере
     let trainerInfo: AuthResponse['user']['trainer'];
     if (user.user_type === 'client') {
       const clientWithTrainer = await this.clientRepository.findOne({

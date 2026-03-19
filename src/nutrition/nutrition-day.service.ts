@@ -39,7 +39,6 @@ export class NutritionDayService {
   }
 
   async create(dayData: CreateNutritionDayDto): Promise<NutritionDay> {
-    // Найдем план по ID
     const plan = await this.nutritionPlanRepository.findOne({
       where: { id: dayData.nutritionPlanId },
       relations: ['nutritionCategory'], // Загружаем связанную категорию
@@ -55,7 +54,6 @@ export class NutritionDayService {
     day.name = dayData.name;
     day.description = dayData.description;
     day.nutritionPlan = plan; // Присваиваем объект плана
-    // Автоматически устанавливаем ID категории из плана
     day.nutritionCategoryId = plan.nutritionCategory
       ? plan.nutritionCategory.id
       : undefined;
@@ -79,7 +77,6 @@ export class NutritionDayService {
       throw new NotFoundException(`Nutrition day with ID ${id} not found`);
     }
 
-    // Если передан ID плана, обновим связь
     if (dayData.nutritionPlanId) {
       const plan = await this.nutritionPlanRepository.findOne({
         where: { id: dayData.nutritionPlanId },
@@ -93,7 +90,6 @@ export class NutritionDayService {
       }
 
       existingDay.nutritionPlan = plan;
-      // Автоматически устанавливаем ID категории из плана
       existingDay.nutritionCategoryId = plan.nutritionCategory
         ? plan.nutritionCategory.id
         : undefined;

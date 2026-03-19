@@ -37,7 +37,6 @@ export class Client {
   @Column({ nullable: true })
   last_name?: string;
 
-  // Поля профиля
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   waist_circumference?: number;
 
@@ -77,7 +76,6 @@ export class Client {
   @Column({ type: 'text', array: true, nullable: true })
   photo_urls?: string[];
 
-  // Поля для хранения текущих данных прогресса
   @Column({
     name: 'weight',
     type: 'decimal',

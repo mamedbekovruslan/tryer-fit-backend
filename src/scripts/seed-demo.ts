@@ -204,9 +204,6 @@ async function seed(): Promise<void> {
       await manager.save(chatMessage);
     });
 
-    console.log('Demo seed completed successfully.');
-    console.log('Trainer: trainer@example.com / Password123!');
-    console.log('Client: client@example.com / Password123!');
   } finally {
     await AppDataSource.destroy();
   }

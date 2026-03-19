@@ -42,7 +42,6 @@ export class TrainerWorkoutService {
     private clientRepository: Repository<Client>,
   ) {}
 
-  // Workout Categories
   async getTrainerWorkoutCategories(
     trainerId: number,
   ): Promise<WorkoutCategory[]> {
@@ -131,7 +130,6 @@ export class TrainerWorkoutService {
     await this.workoutCategoryRepository.delete(categoryId);
   }
 
-  // Workout Programs
   async getAllWorkoutPrograms(trainerId: number): Promise<WorkoutProgram[]> {
     const trainer = await this.trainerRepository.findOne({
       where: { id: trainerId },
@@ -316,7 +314,6 @@ export class TrainerWorkoutService {
     await this.workoutProgramRepository.delete(programId);
   }
 
-  // Workout Days
   async getWorkoutDaysByProgramAndTrainer(
     trainerId: number,
     programId: number,
@@ -470,7 +467,6 @@ export class TrainerWorkoutService {
     await this.workoutDayRepository.delete(dayId);
   }
 
-  // Exercises
   async getExercisesByDayAndTrainer(
     trainerId: number,
     dayId: number,
@@ -641,7 +637,6 @@ export class TrainerWorkoutService {
     await this.exerciseRepository.delete(exerciseId);
   }
 
-  // Client Workout Programs
   async assignWorkoutProgramToClient(
     trainerId: number,
     createDto: CreateClientWorkoutProgramDto,
@@ -662,7 +657,6 @@ export class TrainerWorkoutService {
       );
     }
 
-    // Verify client belongs to this trainer
     if (client.trainer && client.trainer.id !== trainerId) {
       throw new ForbiddenException(
         `You don't have permission to assign programs to this client`,
@@ -679,7 +673,6 @@ export class TrainerWorkoutService {
       );
     }
 
-    // Verify program belongs to this trainer
     if (program.trainer && program.trainer.id !== trainerId) {
       throw new ForbiddenException(
         `You don't have permission to assign this program`,

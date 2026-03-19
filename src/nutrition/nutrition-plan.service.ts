@@ -45,7 +45,6 @@ export class NutritionPlanService {
     planData: CreateNutritionPlanDto,
     trainerId?: number,
   ): Promise<NutritionPlan> {
-    // Найдем категорию по ID
     const category = await this.nutritionCategoryRepository.findOne({
       where: { id: planData.nutritionCategoryId },
     });
@@ -56,7 +55,6 @@ export class NutritionPlanService {
       );
     }
 
-    // Если передан trainerId, получим тренера
     let trainer: Trainer | null = null;
     if (trainerId) {
       trainer = await this.trainerRepository.findOne({
@@ -67,7 +65,6 @@ export class NutritionPlanService {
       }
     }
 
-    // Создаем план с явным указанием объектов связей
     const plan = new NutritionPlan();
     plan.name = planData.name;
     plan.description = planData.description;
@@ -76,10 +73,8 @@ export class NutritionPlanService {
       plan.trainer = trainer;
     }
 
-    // Сохраняем план
     const savedPlan = await this.nutritionPlanRepository.save(plan);
 
-    // Возвращаем план с отношениями
     const result = await this.nutritionPlanRepository.findOne({
       where: { id: savedPlan.id },
       relations: ['nutritionCategory', 'trainer'],
@@ -110,7 +105,6 @@ export class NutritionPlanService {
       throw new NotFoundException(`Nutrition plan with ID ${id} not found`);
     }
 
-    // Если передан ID категории, обновим связь
     if (planData.nutritionCategoryId) {
       const category = await this.nutritionCategoryRepository.findOne({
         where: { id: planData.nutritionCategoryId },

@@ -50,7 +50,6 @@ export class ClientNutritionPlanService {
   async create(
     planData: CreateClientNutritionPlanDto,
   ): Promise<ClientNutritionPlan> {
-    // Проверяем, существует ли клиент
     const client = await this.clientRepository.findOne({
       where: { id: planData.clientId },
     });
@@ -60,7 +59,6 @@ export class ClientNutritionPlanService {
       );
     }
 
-    // Проверяем, существует ли план питания
     const nutritionPlan = await this.nutritionPlanRepository.findOne({
       where: { id: planData.nutritionPlanId },
     });

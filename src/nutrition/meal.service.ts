@@ -30,7 +30,6 @@ export class MealService {
   }
 
   async create(mealData: CreateMealDto): Promise<Meal> {
-    // Найдем день питания по ID
     const nutritionDay = await this.nutritionDayRepository.findOne({
       where: { id: mealData.nutritionDayId },
     });
@@ -62,7 +61,6 @@ export class MealService {
       throw new NotFoundException(`Meal with ID ${id} not found`);
     }
 
-    // Если передан ID дня питания, обновим связь
     if (mealData.nutritionDayId) {
       const nutritionDay = await this.nutritionDayRepository.findOne({
         where: { id: mealData.nutritionDayId },

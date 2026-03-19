@@ -35,7 +35,6 @@ export class TrainerNutritionController {
     private readonly trainerNutritionService: TrainerNutritionService,
   ) {}
 
-  // Nutrition Categories
   @Get('categories')
   async getTrainerNutritionCategories(
     @Req() req: AuthenticatedRequest,
@@ -85,7 +84,6 @@ export class TrainerNutritionController {
     await this.trainerNutritionService.deleteNutritionCategory(trainerId, id);
   }
 
-  // Nutrition Plans
   @Get('categories/:categoryId/plans')
   async getNutritionPlansByCategory(
     @Req() req: AuthenticatedRequest,
@@ -137,7 +135,6 @@ export class TrainerNutritionController {
     await this.trainerNutritionService.deleteNutritionPlan(trainerId, id);
   }
 
-  // Nutrition Days
   @Get('plans/:planId/days')
   async getNutritionDaysByPlan(
     @Req() req: AuthenticatedRequest,

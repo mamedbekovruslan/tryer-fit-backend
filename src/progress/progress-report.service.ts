@@ -62,7 +62,6 @@ export class ProgressReportService {
   async create(
     createProgressReportDto: CreateProgressReportDto,
   ): Promise<ProgressReport> {
-    // Находим клиента
     const client = await this.clientService.findById(
       createProgressReportDto.clientId,
     );
@@ -70,7 +69,6 @@ export class ProgressReportService {
       throw new NotFoundException('Client not found');
     }
 
-    // Создаем новый отчет о прогрессе
     const progressReport = new ProgressReport();
     progressReport.date = createProgressReportDto.date;
     progressReport.weight = createProgressReportDto.weight;
@@ -85,11 +83,9 @@ export class ProgressReportService {
     progressReport.photoUrls = createProgressReportDto.photoUrls;
     progressReport.client = client;
 
-    // Сохраняем отчет
     const savedReport =
       await this.progressReportRepository.save(progressReport);
 
-    // Обновляем соответствующие поля в профиле клиента
     await this.updateClientProfileWithProgressData(client.id, {
       weight: createProgressReportDto.weight,
       waist_circumference: createProgressReportDto.waist,
@@ -227,13 +223,10 @@ export class ProgressReportService {
       throw new NotFoundException('Progress report not found');
     }
 
-    // Обновляем поля отчета
     Object.assign(report, updateProgressReportDto);
 
-    // Сохраняем обновленный отчет
     const updatedReport = await this.progressReportRepository.save(report);
 
-    // Обновляем соответствующие поля в профиле клиента
     await this.updateClientProfileWithProgressData(clientId, {
       weight: updateProgressReportDto.weight,
       waist_circumference: updateProgressReportDto.waist,
@@ -273,7 +266,6 @@ export class ProgressReportService {
       muscle_mass?: number;
     },
   ) {
-    // Обновляем только те поля, которые предоставлены
     const updateData: Partial<Client> = {};
 
     if (progressData.weight !== undefined) {
@@ -301,7 +293,6 @@ export class ProgressReportService {
       updateData.muscle_mass = progressData.muscle_mass;
     }
 
-    // Если есть данные для обновления, обновляем профиль клиента
     if (Object.keys(updateData).length > 0) {
       await this.clientService.update(clientId, updateData);
     }

@@ -21,7 +21,6 @@ export interface CreateTrainerDto {
   weight?: number;
   phone?: string;
   birth_date?: Date;
-  // Данные профиля тренера
   education?: string;
   institution?: string;
   degree?: string;
@@ -44,27 +43,23 @@ export class TrainerService {
   }
 
   async create(trainerData: CreateTrainerDto): Promise<Trainer> {
-    // Basic validation
     if (!trainerData.email || !trainerData.password || !trainerData.username) {
       throw new BadRequestException(
         'Email, password, and username are required',
       );
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trainerData.email)) {
       throw new BadRequestException('Invalid email format');
     }
 
-    // Validate password strength (at least 6 characters)
     if (trainerData.password.length < 6) {
       throw new BadRequestException(
         'Password must be at least 6 characters long',
       );
     }
 
-    // Hash the password before saving
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(trainerData.password, saltRounds);
 
@@ -81,7 +76,6 @@ export class TrainerService {
     trainer.phone = trainerData.phone;
     trainer.birth_date = trainerData.birth_date;
 
-    // Добавляем поля профиля тренера
     trainer.education = trainerData.education;
     trainer.institution = trainerData.institution;
     trainer.degree = trainerData.degree;
@@ -100,7 +94,6 @@ export class TrainerService {
     return await this.trainerRepository.findOne({ where: { id } });
   }
 
-  // Получить клиентов, привязанных к тренеру
   async getClientsByTrainerId(trainerId: number): Promise<Client[]> {
     return await this.clientRepository.find({
       where: { trainer: { id: trainerId } },
@@ -108,12 +101,10 @@ export class TrainerService {
     });
   }
 
-  // Привязать клиента к тренеру
   async assignClientToTrainer(
     clientId: number,
     trainerId: number,
   ): Promise<Client> {
-    // Находим клиента и тренера
     const client = await this.clientRepository.findOne({
       where: { id: clientId },
       relations: ['trainer'],
@@ -130,11 +121,9 @@ export class TrainerService {
       throw new NotFoundException(`Trainer with ID ${trainerId} not found`);
     }
 
-    // Привязываем клиента к тренеру
     client.trainer = trainer;
     const updatedClient = await this.clientRepository.save(client);
 
-    // Возвращаем обновленного клиента с полной информацией о тренере
     const result = await this.clientRepository.findOne({
       where: { id: updatedClient.id },
       relations: ['trainer'],
@@ -147,9 +136,7 @@ export class TrainerService {
     return result;
   }
 
-  // Отвязать клиента от тренера
   async unassignClientFromTrainer(clientId: number): Promise<Client> {
-    // Используем QueryBuilder для обновления связи
     await this.clientRepository
       .createQueryBuilder()
       .update()
@@ -157,7 +144,6 @@ export class TrainerService {
       .where('id = :id', { id: clientId })
       .execute();
 
-    // Возвращаем обновленного клиента
     const result = await this.clientRepository.findOne({
       where: { id: clientId },
       relations: ['trainer'],
@@ -170,7 +156,6 @@ export class TrainerService {
     return result;
   }
 
-  // Обновить информацию о тренере
   async updateTrainer(
     id: number,
     updateData: Partial<CreateTrainerDto>,
@@ -181,10 +166,8 @@ export class TrainerService {
       throw new NotFoundException(`Trainer with ID ${id} not found`);
     }
 
-    // Обновляем только те поля, которые предоставлены в updateData
     Object.assign(trainer, updateData);
 
-    // Если предоставлен новый пароль, хешируем его
     if (updateData.password) {
       const saltRounds = 10;
       trainer.password_hash = await bcrypt.hash(

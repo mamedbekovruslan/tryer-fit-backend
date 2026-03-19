@@ -55,7 +55,6 @@ export class TrainerController {
   async register(
     @Body() createTrainerDto: CreateTrainerDto,
   ): Promise<TrainerResponse> {
-    // Check if trainer already exists
     const existingTrainer = await this.trainerService.findByEmail(
       createTrainerDto.email,
     );
@@ -63,7 +62,6 @@ export class TrainerController {
       throw new ConflictException('Trainer with this email already exists');
     }
 
-    // Basic validation
     if (
       !createTrainerDto.email ||
       !createTrainerDto.password ||
@@ -95,7 +93,6 @@ export class TrainerController {
     return toTrainerResponse(trainer);
   }
 
-  // Получить клиентов, которые не привязаны ни к какому тренеру
   @Get('unassigned-clients')
   @UseGuards(JwtAuthGuard)
   async getUnassignedClients(
@@ -110,7 +107,6 @@ export class TrainerController {
     return clients.map(toClientResponse);
   }
 
-  // Получить клиентов, привязанных к тренеру
   @Get(':id/clients')
   @UseGuards(JwtAuthGuard)
   async getClients(
@@ -119,7 +115,6 @@ export class TrainerController {
   ): Promise<ClientResponse[]> {
     const trainerId = parseInt(id, 10);
 
-    // Проверяем, является ли id допустимым числом
     if (isNaN(trainerId)) {
       throw new BadRequestException('Invalid trainer ID');
     }
@@ -134,7 +129,6 @@ export class TrainerController {
     return clients.map(toClientResponse);
   }
 
-  // Привязать клиента к тренеру
   @Put(':trainerId/assign-client/:clientId')
   @UseGuards(JwtAuthGuard)
   async assignClientToTrainer(
@@ -145,7 +139,6 @@ export class TrainerController {
     const tId = parseInt(trainerId, 10);
     const cId = parseInt(clientId, 10);
 
-    // Проверяем, является ли id допустимыми числами
     if (isNaN(tId) || isNaN(cId)) {
       throw new BadRequestException('Invalid trainer or client ID');
     }
@@ -160,7 +153,6 @@ export class TrainerController {
     return toClientResponse(client);
   }
 
-  // Отвязать клиента от тренера
   @Delete(':trainerId/unassign-client/:clientId')
   @UseGuards(JwtAuthGuard)
   async unassignClientFromTrainer(
@@ -171,7 +163,6 @@ export class TrainerController {
     const tId = parseInt(trainerId, 10);
     const cId = parseInt(clientId, 10);
 
-    // Проверяем, является ли id допустимыми числами
     if (isNaN(tId) || isNaN(cId)) {
       throw new BadRequestException('Invalid trainer or client ID');
     }
@@ -195,7 +186,6 @@ export class TrainerController {
   ): Promise<TrainerResponse> {
     const trainerId = parseInt(id, 10);
 
-    // Проверяем, является ли id допустимым числом
     if (isNaN(trainerId)) {
       throw new BadRequestException('Invalid trainer ID');
     }
@@ -213,7 +203,6 @@ export class TrainerController {
     return toTrainerResponse(trainer);
   }
 
-  // PATCH endpoint для обновления отдельных полей
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   async updateField(
@@ -223,7 +212,6 @@ export class TrainerController {
   ): Promise<TrainerResponse> {
     const trainerId = parseInt(id, 10);
 
-    // Проверяем, является ли id допустимым числом
     if (isNaN(trainerId)) {
       throw new BadRequestException('Invalid trainer ID');
     }
@@ -249,7 +237,6 @@ export class TrainerController {
   ): Promise<TrainerResponse> {
     const trainerId = parseInt(id, 10);
 
-    // Проверяем, является ли id допустимым числом
     if (isNaN(trainerId)) {
       throw new BadRequestException('Invalid trainer ID');
     }

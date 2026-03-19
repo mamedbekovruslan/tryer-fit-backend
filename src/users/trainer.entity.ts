@@ -46,7 +46,6 @@ export class Trainer {
   @Column({ type: 'date', nullable: true })
   birth_date?: Date;
 
-  // Поля профиля тренера
   @Column({ type: 'text', nullable: true })
   education?: string;
 

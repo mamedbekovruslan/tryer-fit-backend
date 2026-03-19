@@ -46,7 +46,6 @@ export class ClientController {
   async register(
     @Body() createClientDto: CreateClientDto,
   ): Promise<ClientResponse> {
-    // Check if client already exists
     const existingClient = await this.clientService.findByEmail(
       createClientDto.email,
     );
@@ -54,7 +53,6 @@ export class ClientController {
       throw new ConflictException('Client with this email already exists');
     }
 
-    // Basic validation
     if (
       !createClientDto.email ||
       !createClientDto.password ||
@@ -120,7 +118,6 @@ export class ClientController {
       throw new NotFoundException('Client not found');
     }
 
-    // Обновляем только те поля, которые предоставлены в запросе
     Object.assign(client, updateClientDto);
 
     const updatedClient = await this.clientService.update(client.id, client);

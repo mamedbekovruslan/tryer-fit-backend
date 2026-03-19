@@ -21,16 +21,12 @@ export class ChatService {
     private trainerRepository: Repository<Trainer>,
   ) {}
 
-  /**
-   * Отправить сообщение
-   */
   async sendMessage(
     senderId: number,
     sendMessageDto: SendMessageDto,
   ): Promise<ChatMessage> {
     const { receiverId, senderType, message } = sendMessageDto;
 
-    // Проверка: если отправитель клиент, получатель должен быть его тренером
     if (senderType === SenderType.CLIENT) {
       const client = await this.clientRepository.findOne({
         where: { id: senderId },
@@ -48,7 +44,6 @@ export class ChatService {
       }
     }
 
-    // Проверка: если отправитель тренер, получатель должен быть его клиентом
     if (senderType === SenderType.TRAINER) {
       const trainer = await this.trainerRepository.findOne({
         where: { id: senderId },
@@ -82,9 +77,6 @@ export class ChatService {
     return await this.chatMessageRepository.save(chatMessage);
   }
 
-  /**
-   * Получить историю переписки между двумя пользователями
-   */
   async getConversation(
     userId: number,
     otherUserId: number,
@@ -104,15 +96,11 @@ export class ChatService {
     return messages;
   }
 
-  /**
-   * Получить все чаты пользователя с последними сообщениями
-   */
   async getUserChats(
     userId: number,
     userType: 'client' | 'trainer',
   ): Promise<any[]> {
     if (userType === 'client') {
-      // Клиент имеет только один чат - со своим тренером
       const client = await this.clientRepository.findOne({
         where: { id: userId },
         relations: ['trainer'],
@@ -122,7 +110,6 @@ export class ChatService {
         return [];
       }
 
-      // Получаем последнее сообщение
       const lastMessage = await this.chatMessageRepository.findOne({
         where: [
           { senderId: userId, receiverId: client.trainer.id },
@@ -131,7 +118,6 @@ export class ChatService {
         order: { createdAt: 'DESC' },
       });
 
-      // Считаем непрочитанные сообщения
       const unreadCount = await this.chatMessageRepository.count({
         where: {
           senderId: client.trainer.id,
@@ -152,7 +138,6 @@ export class ChatService {
         },
       ];
     } else {
-      // Тренер имеет чаты со всеми своими клиентами
       const clients = await this.clientRepository.find({
         where: { trainer: { id: userId } },
         relations: ['trainer'],
@@ -160,7 +145,6 @@ export class ChatService {
 
       const chats: any[] = [];
       for (const client of clients) {
-        // Получаем последнее сообщение
         const lastMessage = await this.chatMessageRepository.findOne({
           where: [
             { senderId: userId, receiverId: client.id },
@@ -169,7 +153,6 @@ export class ChatService {
           order: { createdAt: 'DESC' },
         });
 
-        // Считаем непрочитанные сообщения
         const unreadCount = await this.chatMessageRepository.count({
           where: {
             senderId: client.id,
@@ -194,9 +177,6 @@ export class ChatService {
     }
   }
 
-  /**
-   * Отметить сообщения как прочитанные
-   */
   async markMessagesAsRead(userId: number, senderId: number): Promise<void> {
     await this.chatMessageRepository.update(
       {
@@ -208,9 +188,6 @@ export class ChatService {
     );
   }
 
-  /**
-   * Получить непрочитанные сообщения
-   */
   async getUnreadMessages(
     userId: number,
     senderId: number,

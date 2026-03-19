@@ -45,7 +45,6 @@ export class ProgressReportController {
       'Only clients can create progress reports',
     );
 
-    // Устанавливаем ID клиента из токена, если не предоставлен в запросе
     if (!createProgressReportDto.clientId) {
       createProgressReportDto.clientId = req.user.sub;
     } else {
@@ -56,7 +55,6 @@ export class ProgressReportController {
       );
     }
 
-    // Преобразуем дату, если она передана в виде строки
     if (typeof createProgressReportDto.date === 'string') {
       createProgressReportDto.date = new Date(createProgressReportDto.date);
     }
@@ -72,7 +70,6 @@ export class ProgressReportController {
   async findAll(
     @Request() req: AuthenticatedRequest,
   ): Promise<ProgressReportResponse[]> {
-    // Клиенты могут получать только свои отчеты
     if (req.user.user_type === 'client') {
       const reports = await this.progressReportService.findAllByClient(
         req.user.sub,
@@ -80,8 +77,6 @@ export class ProgressReportController {
       return reports.map(toProgressReportResponse);
     }
 
-    // Тренеры могут получать отчеты своих клиентов (реализация для будущего использования)
-    // throw new BadRequestException('Trainers cannot access progress reports yet');
     return [];
   }
 
@@ -111,7 +106,6 @@ export class ProgressReportController {
   ): Promise<ProgressReportResponse> {
     const reportId = parseInt(id, 10);
 
-    // Клиенты могут получать только свои отчеты
     if (req.user.user_type === 'client') {
       const report = await this.progressReportService.findOne(
         reportId,
@@ -123,7 +117,6 @@ export class ProgressReportController {
       return toProgressReportResponse(report);
     }
 
-    // Тренеры могут получать отчеты своих клиентов (реализация для будущего использования)
     if (req.user.user_type === 'trainer') {
       const report = await this.progressReportService.findOneForTrainer(
         reportId,
@@ -183,7 +176,6 @@ export class ProgressReportController {
   ): Promise<ProgressReportResponse> {
     const reportId = parseInt(id, 10);
 
-    // Клиенты могут обновлять только свои отчеты
     if (req.user.user_type === 'client') {
       const report = await this.progressReportService.update(
         reportId,
@@ -204,7 +196,6 @@ export class ProgressReportController {
   ): Promise<void> {
     const reportId = parseInt(id, 10);
 
-    // Клиенты могут удалять только свои отчеты
     if (req.user.user_type === 'client') {
       await this.progressReportService.remove(reportId, req.user.sub);
     } else {

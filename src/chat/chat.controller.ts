@@ -32,9 +32,6 @@ export class ChatController {
     private readonly accessControlService: AccessControlService,
   ) {}
 
-  /**
-   * Получить историю переписки с пользователем
-   */
   @Get('messages/:userId')
   async getConversation(
     @Request() req: AuthenticatedRequest,
@@ -56,9 +53,6 @@ export class ChatController {
     return messages.map(toChatMessageResponse);
   }
 
-  /**
-   * Получить все чаты пользователя
-   */
   @Get('chats')
   async getUserChats(
     @Request() req: AuthenticatedRequest,
@@ -69,9 +63,6 @@ export class ChatController {
     return chats.map(toChatSummaryResponse);
   }
 
-  /**
-   * Отправить сообщение (REST API, если WebSocket недоступен)
-   */
   @Post('messages')
   @HttpCode(HttpStatus.CREATED)
   async sendMessage(
@@ -86,9 +77,6 @@ export class ChatController {
     return toChatMessageResponse(message);
   }
 
-  /**
-   * Отметить сообщения как прочитанные
-   */
   @Patch('messages/:senderId/read')
   @HttpCode(HttpStatus.OK)
   async markMessagesAsRead(
@@ -104,9 +92,6 @@ export class ChatController {
     return { success: true };
   }
 
-  /**
-   * Получить непрочитанные сообщения
-   */
   @Get('messages/unread/:senderId')
   async getUnreadMessages(
     @Request() req: AuthenticatedRequest,
